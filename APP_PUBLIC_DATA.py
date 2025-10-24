@@ -73,41 +73,14 @@ if st.session_state.step == 1:
         "🔄 **Preparando el escenario digital:**\n\n"
         "En segundos tendrás acceso a la radiografía inteligente de Bogotá, utilizando fuentes oficiales de datos abiertos urbanísticos."
     )
-    nombre_ui = {
-        "localidades": "Localidades",
-        "areas": "Áreas de desarrollo",
-        "manzanas": "Manzanas urbanas",
-        "transporte": "Estaciones de transporte",
-        "colegios": "Centros educativos"
-    }
-    datasets = {
-        "localidades": "https://github.com/andres-fuentex/tfm-avm-bogota/raw/main/datos_visualizacion/datos_geograficos_geo/dim_localidad.geojson",
-        "areas": "https://github.com/andres-fuentex/tfm-avm-bogota/raw/main/datos_visualizacion/datos_geograficos_geo/dim_area.geojson",
-        "manzanas": "https://github.com/andres-fuentex/tfm-avm-bogota/raw/main/datos_visualizacion/datos_geograficos_geo/tabla_hechos.geojson",
-        "transporte": "https://github.com/andres-fuentex/tfm-avm-bogota/raw/main/datos_visualizacion/datos_geograficos_geo/dim_transporte.geojson",
-        "colegios": "https://github.com/andres-fuentex/tfm-avm-bogota/raw/main/datos_visualizacion/datos_geograficos_geo/dim_colegios.geojson"
-    }
-    total = len(datasets)
-    progress_bar = st.progress(0, text="⏳ Conectando con bases de datos urbanas...")
 
-    # Procesamiento visual afuera del caché
-    dataframes = {}
-    for idx, (nombre, url) in enumerate(datasets.items(), start=1):
-        progress_text = f"🗂️ Descargando {nombre_ui.get(nombre, nombre.capitalize())} ({idx}/{total})..."
-        progress_bar.progress(idx / total, text=progress_text)
+    # Usar spinner para indicar proceso de carga
+    with st.spinner('⏳ Conectando y descargando los datasets urbanos...'):
         try:
-            response = requests.get(url, timeout=30)
-            response.raise_for_status()
-            geojson_data = json.loads(response.text)
-            dataframes[nombre] = gpd.GeoDataFrame.from_features(
-                geojson_data["features"], crs="EPSG:4326"
-            )
+            dataframes = cargar_datasets()
         except Exception as e:
-            st.error(f"❌ Error al cargar **{nombre_ui.get(nombre, nombre)}**: {e}")
-            progress_bar.empty()
+            st.error(f"❌ Error al cargar los datos: {e}")
             st.stop()
-
-    progress_bar.empty()
 
     if dataframes:
         st.success('✅ Datos cargados exitosamente. ¡Listo para iniciar tu análisis!')
