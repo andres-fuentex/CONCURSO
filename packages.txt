@@ -1,0 +1,12 @@
+wget
+curl
+unzip
+libglib2.0-0
+libnss3
+libgconf-2-4
+libfontconfig1
+libxss1
+libasound2
+xvfb
+chromium
+python3-pip
