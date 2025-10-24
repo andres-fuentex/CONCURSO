@@ -193,6 +193,9 @@ elif st.session_state.step == 3:
 # ========================================
 # PASO 4: CLIC SOBRE PUNTO DE INTERÉS
 # ========================================
+# ========================================
+# PASO 4: CLIC SOBRE PUNTO DE INTERÉS
+# ========================================
 elif st.session_state.step == 4:
     st.header("📍 Paso 3: Seleccione el Punto de Interés")
     
@@ -201,7 +204,7 @@ elif st.session_state.step == 4:
     **Buffer:** {st.session_state.buffer_size} metros
     
     Haz clic sobre el mapa para seleccionar el punto de interés a analizar.
-    El círculo amarillo muestra el área de análisis que se generará:
+    El círculo naranja muestra el área de análisis que se generará:
     """)
     
     localidades = st.session_state.localidades
@@ -227,31 +230,35 @@ elif st.session_state.step == 4:
         prefer_canvas=True
     )
     
-    # Agregar polígono de la localidad con estilo solicitado
+    # Agregar polígono de la localidad con estilo mejorado (SIN TOOLTIP)
     folium.GeoJson(
         localidad_geo,
         style_function=lambda feature: {
-            "fillColor": "#FFFACD",  # Amarillo muy claro (LemonChiffon)
+            "fillColor": "#FFB366",  # Naranja claro
             "color": "#FF0000",  # Borde rojo
             "weight": 3,
-            "fillOpacity": 0.15  # Muy tenue
+            "fillOpacity": 0.35,  # Más visible
+            "interactive": True  # Importante para eventos
         },
         highlight_function=lambda feature: {
-            "fillColor": "#FFFFE0",  # Amarillo más claro al hover
+            "fillColor": "#FFA64D",  # Naranja más intenso al hover
             "color": "#FF0000",
             "weight": 4,
-            "fillOpacity": 0.25
-        },
-        tooltip=folium.Tooltip(
-            f"<b>{st.session_state.localidad_sel}</b><br>Haz clic para seleccionar un punto",
-            sticky=True
-        )
+            "fillOpacity": 0.45
+        }
     ).add_to(mapa)
     
-    # Agregar CSS personalizado para cambiar el cursor y agregar círculo dinámico
+    # Agregar CSS mejorado para el cursor en TODO el mapa
     cursor_css = f"""
     <style>
+        /* Cursor de cruz en todo el contenedor del mapa */
+        .folium-map {{
+            cursor: crosshair !important;
+        }}
         .leaflet-container {{
+            cursor: crosshair !important;
+        }}
+        .leaflet-interactive {{
             cursor: crosshair !important;
         }}
         .leaflet-grab {{
@@ -260,77 +267,127 @@ elif st.session_state.step == 4:
         .leaflet-dragging .leaflet-grab {{
             cursor: move !important;
         }}
+        /* Asegurar que el tooltip no cambie el cursor */
+        .leaflet-tooltip {{
+            pointer-events: none !important;
+        }}
     </style>
     """
     
-    # JavaScript para mostrar círculo dinámico siguiendo el mouse
+    # JavaScript mejorado para el círculo dinámico
     buffer_circle_js = f"""
     <script>
-    var bufferRadius = {st.session_state.buffer_size};  // Radio en metros
+    var bufferRadius = {st.session_state.buffer_size};
     var bufferCircle = null;
+    var clickedCircle = null;
+    var clickedMarker = null;
     
-    // Esperar a que el mapa esté listo
-    setTimeout(function() {{
-        var mapElement = document.querySelector('.folium-map');
-        if (mapElement && mapElement._leaflet_map) {{
-            var map = mapElement._leaflet_map;
-            
-            // Evento de movimiento del mouse
-            map.on('mousemove', function(e) {{
-                // Remover círculo anterior si existe
-                if (bufferCircle) {{
-                    map.removeLayer(bufferCircle);
-                }}
+    function initBufferCircle() {{
+        var maps = document.querySelectorAll('.folium-map');
+        
+        maps.forEach(function(mapElement) {{
+            if (mapElement && mapElement._leaflet_map) {{
+                var map = mapElement._leaflet_map;
                 
-                // Crear nuevo círculo en la posición del cursor
-                bufferCircle = L.circle(e.latlng, {{
-                    radius: bufferRadius,
-                    color: '#FFA500',      // Naranja
-                    fillColor: '#FFD700',  // Dorado
-                    fillOpacity: 0.2,
-                    weight: 2,
-                    dashArray: '5, 5'      // Línea punteada
-                }}).addTo(map);
-            }});
-            
-            // Remover círculo cuando el mouse sale del mapa
-            map.on('mouseout', function(e) {{
-                if (bufferCircle) {{
-                    map.removeLayer(bufferCircle);
-                    bufferCircle = null;
-                }}
-            }});
-            
-            // Evento de clic para mantener el círculo en la posición seleccionada
-            map.on('click', function(e) {{
-                // Remover círculo dinámico
-                if (bufferCircle) {{
-                    map.removeLayer(bufferCircle);
-                }}
+                // Remover listeners anteriores si existen
+                map.off('mousemove');
+                map.off('mouseout');
+                map.off('click');
                 
-                // Crear círculo fijo en la posición del clic
-                L.circle(e.latlng, {{
-                    radius: bufferRadius,
-                    color: '#FF4500',      // Rojo-naranja
-                    fillColor: '#FF6347',  // Tomate
-                    fillOpacity: 0.3,
-                    weight: 3
-                }}).addTo(map);
+                // Evento de movimiento del mouse - círculo dinámico
+                map.on('mousemove', function(e) {{
+                    // Remover círculo anterior
+                    if (bufferCircle) {{
+                        map.removeLayer(bufferCircle);
+                    }}
+                    
+                    // Crear nuevo círculo siguiendo el cursor
+                    bufferCircle = L.circle(e.latlng, {{
+                        radius: bufferRadius,
+                        color: '#FF8C00',      // Naranja oscuro
+                        fillColor: '#FFA500',  // Naranja
+                        fillOpacity: 0.25,
+                        weight: 2,
+                        dashArray: '8, 4',     // Línea punteada más visible
+                        interactive: false     // No interfiere con clics
+                    }}).addTo(map);
+                    
+                    // Mover al frente para que sea visible
+                    bufferCircle.bringToFront();
+                }});
                 
-                // Agregar marcador en el punto seleccionado
-                L.marker(e.latlng, {{
-                    icon: L.icon({{
-                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                        iconSize: [25, 41],
-                        iconAnchor: [12, 41],
-                        popupAnchor: [1, -34],
-                        shadowSize: [41, 41]
-                    }})
-                }}).addTo(map).bindPopup('<b>Punto Seleccionado</b><br>Buffer: {st.session_state.buffer_size}m').openPopup();
-            }});
-        }}
-    }}, 500);
+                // Remover círculo cuando el mouse sale del mapa
+                map.on('mouseout', function(e) {{
+                    if (bufferCircle) {{
+                        map.removeLayer(bufferCircle);
+                        bufferCircle = null;
+                    }}
+                }});
+                
+                // Evento de clic - fijar círculo y marcador
+                map.on('click', function(e) {{
+                    // Remover círculo dinámico
+                    if (bufferCircle) {{
+                        map.removeLayer(bufferCircle);
+                        bufferCircle = null;
+                    }}
+                    
+                    // Remover círculo y marcador anteriores si existen
+                    if (clickedCircle) {{
+                        map.removeLayer(clickedCircle);
+                    }}
+                    if (clickedMarker) {{
+                        map.removeLayer(clickedMarker);
+                    }}
+                    
+                    // Crear círculo fijo en la posición del clic
+                    clickedCircle = L.circle(e.latlng, {{
+                        radius: bufferRadius,
+                        color: '#DC143C',      // Crimson
+                        fillColor: '#FF6347',  // Tomate
+                        fillOpacity: 0.35,
+                        weight: 3,
+                        interactive: false
+                    }}).addTo(map);
+                    
+                    // Agregar marcador en el punto seleccionado
+                    clickedMarker = L.marker(e.latlng, {{
+                        icon: L.icon({{
+                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [1, -34],
+                            shadowSize: [41, 41]
+                        }})
+                    }}).addTo(map);
+                    
+                    // Agregar popup
+                    clickedMarker.bindPopup(
+                        '<div style="text-align: center;">' +
+                        '<b>📍 Punto Seleccionado</b><br>' +
+                        'Lat: ' + e.latlng.lat.toFixed(6) + '<br>' +
+                        'Lon: ' + e.latlng.lng.toFixed(6) + '<br>' +
+                        'Buffer: {st.session_state.buffer_size}m' +
+                        '</div>'
+                    ).openPopup();
+                }});
+            }}
+        }});
+    }}
+    
+    // Inicializar cuando el DOM esté listo
+    if (document.readyState === 'loading') {{
+        document.addEventListener('DOMContentLoaded', function() {{
+            setTimeout(initBufferCircle, 500);
+        }});
+    }} else {{
+        setTimeout(initBufferCircle, 500);
+    }}
+    
+    // También intentar inicializar después de un delay adicional
+    setTimeout(initBufferCircle, 1000);
+    setTimeout(initBufferCircle, 2000);
     </script>
     """
     
@@ -339,7 +396,7 @@ elif st.session_state.step == 4:
     mapa.get_root().html.add_child(folium.Element(buffer_circle_js))
     
     # Renderizar mapa
-    result = st_folium(mapa, width=900, height=600, returned_objects=["last_clicked"])
+    result = st_folium(mapa, width=900, height=600, returned_objects=["last_clicked"], key="mapa_punto")
     
     # Detectar clic
     clicked = result.get("last_clicked")
