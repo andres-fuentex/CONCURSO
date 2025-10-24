@@ -474,7 +474,7 @@ elif st.session_state.step == 5:
                 size=14,
                 color='#E63946',    # Rojo intenso
                 opacity=0.95,
-                symbol='square'     # Para distinguir del punto central y otros servicios
+                symbol='circle-open'     # Para distinguir del punto central y otros servicios
             ),
             text=[f'Estación {i+1}' for i in range(len(estaciones_area))],
             hoverinfo='text'
@@ -573,7 +573,7 @@ elif st.session_state.step == 5:
                 size=13,
                 color='#8E44AD',   # Morado
                 opacity=0.88,
-                symbol='diamond'   # Para distinguirse de estaciones y punto central
+                symbol='diamond-open'   # Para distinguirse de estaciones y punto central
             ),
             text=[f'Colegio {i+1}' for i in range(len(colegios_area))],
             hoverinfo='text'
