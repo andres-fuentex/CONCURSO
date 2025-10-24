@@ -275,130 +275,130 @@ elif st.session_state.step == 4:
     """
     
     # JavaScript mejorado y simplificado para el círculo dinámico
-buffer_size_value = st.session_state.buffer_size  # Capturar el valor antes del f-string
+    buffer_size_value = st.session_state.buffer_size  # Capturar el valor antes del f-string
 
-buffer_circle_js = f"""
-<script>
-    // Variables globales
-    var bufferRadius = {buffer_size_value};  // Usar valor capturado
-    var bufferCircle = null;
-    var clickedCircle = null;
-    var clickedMarker = null;
-    
-    console.log('Buffer radius configurado:', bufferRadius);
-    
-    function setupBufferCircle() {{
-        // Buscar el mapa en el iframe de streamlit-folium
-        var iframes = document.getElementsByTagName('iframe');
-        var mapFound = false;
+    buffer_circle_js = f"""
+    <script>
+        // Variables globales
+        var bufferRadius = {buffer_size_value};  // Usar valor capturado
+        var bufferCircle = null;
+        var clickedCircle = null;
+        var clickedMarker = null;
         
-        for (var i = 0; i < iframes.length; i++) {{
-            try {{
-                var iframeDoc = iframes[i].contentDocument || iframes[i].contentWindow.document;
-                var mapDiv = iframeDoc.querySelector('.leaflet-container');
-                
-                if (mapDiv && mapDiv._leaflet) {{
-                    var map = mapDiv._leaflet;
-                    mapFound = true;
-                    console.log('Mapa encontrado! Configurando círculo dinámico...');
+        console.log('Buffer radius configurado:', bufferRadius);
+        
+        function setupBufferCircle() {{
+            // Buscar el mapa en el iframe de streamlit-folium
+            var iframes = document.getElementsByTagName('iframe');
+            var mapFound = false;
+            
+            for (var i = 0; i < iframes.length; i++) {{
+                try {{
+                    var iframeDoc = iframes[i].contentDocument || iframes[i].contentWindow.document;
+                    var mapDiv = iframeDoc.querySelector('.leaflet-container');
                     
-                    // Limpiar eventos anteriores
-                    map.off('mousemove');
-                    map.off('mouseout');  
-                    map.off('click');
-                    
-                    // Evento mousemove - círculo que sigue el cursor
-                    map.on('mousemove', function(e) {{
-                        // Remover círculo anterior
-                        if (bufferCircle) {{
-                            map.removeLayer(bufferCircle);
-                        }}
+                    if (mapDiv && mapDiv._leaflet) {{
+                        var map = mapDiv._leaflet;
+                        mapFound = true;
+                        console.log('Mapa encontrado! Configurando círculo dinámico...');
                         
-                        // Crear nuevo círculo
-                        bufferCircle = L.circle(e.latlng, {{
-                            radius: bufferRadius,
-                            color: '#FF8C00',
-                            fillColor: '#FFA500',
-                            fillOpacity: 0.25,
-                            weight: 2,
-                            dashArray: '8, 4',
-                            interactive: false,
-                            pane: 'overlayPane'
-                        }}).addTo(map);
+                        // Limpiar eventos anteriores
+                        map.off('mousemove');
+                        map.off('mouseout');  
+                        map.off('click');
                         
-                        bufferCircle.bringToFront();
-                    }});
-                    
-                    // Remover círculo al salir del mapa
-                    map.on('mouseout', function(e) {{
-                        if (bufferCircle) {{
-                            map.removeLayer(bufferCircle);
-                            bufferCircle = null;
-                        }}
-                    }});
-                    
-                    // Click - fijar círculo y marcador
-                    map.on('click', function(e) {{
-                        console.log('Click detectado en:', e.latlng);
+                        // Evento mousemove - círculo que sigue el cursor
+                        map.on('mousemove', function(e) {{
+                            // Remover círculo anterior
+                            if (bufferCircle) {{
+                                map.removeLayer(bufferCircle);
+                            }}
+                            
+                            // Crear nuevo círculo
+                            bufferCircle = L.circle(e.latlng, {{
+                                radius: bufferRadius,
+                                color: '#FF8C00',
+                                fillColor: '#FFA500',
+                                fillOpacity: 0.25,
+                                weight: 2,
+                                dashArray: '8, 4',
+                                interactive: false,
+                                pane: 'overlayPane'
+                            }}).addTo(map);
+                            
+                            bufferCircle.bringToFront();
+                        }});
                         
-                        // Limpiar círculo dinámico
-                        if (bufferCircle) {{
-                            map.removeLayer(bufferCircle);
-                            bufferCircle = null;
-                        }}
+                        // Remover círculo al salir del mapa
+                        map.on('mouseout', function(e) {{
+                            if (bufferCircle) {{
+                                map.removeLayer(bufferCircle);
+                                bufferCircle = null;
+                            }}
+                        }});
                         
-                        // Limpiar selección anterior
-                        if (clickedCircle) {{
-                            map.removeLayer(clickedCircle);
-                        }}
-                        if (clickedMarker) {{
-                            map.removeLayer(clickedMarker);
-                        }}
+                        // Click - fijar círculo y marcador
+                        map.on('click', function(e) {{
+                            console.log('Click detectado en:', e.latlng);
+                            
+                            // Limpiar círculo dinámico
+                            if (bufferCircle) {{
+                                map.removeLayer(bufferCircle);
+                                bufferCircle = null;
+                            }}
+                            
+                            // Limpiar selección anterior
+                            if (clickedCircle) {{
+                                map.removeLayer(clickedCircle);
+                            }}
+                            if (clickedMarker) {{
+                                map.removeLayer(clickedMarker);
+                            }}
+                            
+                            // Círculo fijo
+                            clickedCircle = L.circle(e.latlng, {{
+                                radius: bufferRadius,
+                                color: '#DC143C',
+                                fillColor: '#FF6347',
+                                fillOpacity: 0.35,
+                                weight: 3,
+                                interactive: false
+                            }}).addTo(map);
+                            
+                            // Marcador
+                            clickedMarker = L.marker(e.latlng).addTo(map);
+                            clickedMarker.bindPopup(
+                                '<div style="text-align: center; font-family: Arial;">' +
+                                '<b>📍 Punto Seleccionado</b><br>' +
+                                'Lat: ' + e.latlng.lat.toFixed(6) + '<br>' +
+                                'Lon: ' + e.latlng.lng.toFixed(6) + '<br>' +
+                                'Buffer: ' + bufferRadius + 'm' +
+                                '</div>'
+                            ).openPopup();
+                        }});
                         
-                        // Círculo fijo
-                        clickedCircle = L.circle(e.latlng, {{
-                            radius: bufferRadius,
-                            color: '#DC143C',
-                            fillColor: '#FF6347',
-                            fillOpacity: 0.35,
-                            weight: 3,
-                            interactive: false
-                        }}).addTo(map);
-                        
-                        // Marcador
-                        clickedMarker = L.marker(e.latlng).addTo(map);
-                        clickedMarker.bindPopup(
-                            '<div style="text-align: center; font-family: Arial;">' +
-                            '<b>📍 Punto Seleccionado</b><br>' +
-                            'Lat: ' + e.latlng.lat.toFixed(6) + '<br>' +
-                            'Lon: ' + e.latlng.lng.toFixed(6) + '<br>' +
-                            'Buffer: ' + bufferRadius + 'm' +
-                            '</div>'
-                        ).openPopup();
-                    }});
-                    
-                    break;
+                        break;
+                    }}
+                }} catch (e) {{
+                    console.log('Error accediendo iframe:', e);
                 }}
-            }} catch (e) {{
-                console.log('Error accediendo iframe:', e);
+            }}
+            
+            if (!mapFound) {{
+                console.log('Mapa no encontrado, reintentando...');
+                setTimeout(setupBufferCircle, 500);
+            }} else {{
+                console.log('Círculo dinámico configurado exitosamente!');
             }}
         }}
         
-        if (!mapFound) {{
-            console.log('Mapa no encontrado, reintentando...');
-            setTimeout(setupBufferCircle, 500);
-        }} else {{
-            console.log('Círculo dinámico configurado exitosamente!');
-        }}
-    }}
-    
-    // Intentar configurar múltiples veces
-    setTimeout(setupBufferCircle, 500);
-    setTimeout(setupBufferCircle, 1000);
-    setTimeout(setupBufferCircle, 1500);
-    setTimeout(setupBufferCircle, 2000);
-</script>
-"""
+        // Intentar configurar múltiples veces
+        setTimeout(setupBufferCircle, 500);
+        setTimeout(setupBufferCircle, 1000);
+        setTimeout(setupBufferCircle, 1500);
+        setTimeout(setupBufferCircle, 2000);
+    </script>
+    """
     
     # Agregar CSS y JS al mapa
     mapa.get_root().html.add_child(folium.Element(cursor_css))
