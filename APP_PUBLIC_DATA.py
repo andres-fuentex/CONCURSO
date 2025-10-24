@@ -200,7 +200,8 @@ elif st.session_state.step == 4:
     **Localidad:** {st.session_state.localidad_sel}  
     **Buffer:** {st.session_state.buffer_size} metros
     
-    Haz clic sobre el mapa para seleccionar el punto de interés a analizar:
+    Haz clic sobre el mapa para seleccionar el punto de interés a analizar.
+    El círculo amarillo muestra el área de análisis que se generará:
     """)
     
     localidades = st.session_state.localidades
@@ -211,25 +212,133 @@ elif st.session_state.step == 4:
         localidades["nombre_localidad"] == st.session_state.localidad_sel
     ]["num_localidad"].values[0]
     
-    manzanas_loc = manzanas[manzanas["num_localidad"] == cod_localidad]
+    # Obtener geometría de la localidad seleccionada
+    localidad_geo = localidades[localidades["num_localidad"] == cod_localidad]
     
     # Crear mapa de la localidad
-    bounds = manzanas_loc.total_bounds
+    bounds = localidad_geo.total_bounds
     center = [(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2]
     
-    mapa = folium.Map(location=center, zoom_start=13, tiles="CartoDB positron")
+    # Crear mapa con cursor personalizado
+    mapa = folium.Map(
+        location=center, 
+        zoom_start=12, 
+        tiles="CartoDB positron",
+        prefer_canvas=True
+    )
     
-    # Agregar manzanas de la localidad
+    # Agregar polígono de la localidad con estilo solicitado
     folium.GeoJson(
-        manzanas_loc,
+        localidad_geo,
         style_function=lambda feature: {
-            "fillColor": "#4CAF50",
-            "color": "#2E7D32",
-            "weight": 1,
-            "fillOpacity": 0.2
-        }
+            "fillColor": "#FFFACD",  # Amarillo muy claro (LemonChiffon)
+            "color": "#FF0000",  # Borde rojo
+            "weight": 3,
+            "fillOpacity": 0.15  # Muy tenue
+        },
+        highlight_function=lambda feature: {
+            "fillColor": "#FFFFE0",  # Amarillo más claro al hover
+            "color": "#FF0000",
+            "weight": 4,
+            "fillOpacity": 0.25
+        },
+        tooltip=folium.Tooltip(
+            f"<b>{st.session_state.localidad_sel}</b><br>Haz clic para seleccionar un punto",
+            sticky=True
+        )
     ).add_to(mapa)
     
+    # Agregar CSS personalizado para cambiar el cursor y agregar círculo dinámico
+    cursor_css = f"""
+    <style>
+        .leaflet-container {{
+            cursor: crosshair !important;
+        }}
+        .leaflet-grab {{
+            cursor: crosshair !important;
+        }}
+        .leaflet-dragging .leaflet-grab {{
+            cursor: move !important;
+        }}
+    </style>
+    """
+    
+    # JavaScript para mostrar círculo dinámico siguiendo el mouse
+    buffer_circle_js = f"""
+    <script>
+    var bufferRadius = {st.session_state.buffer_size};  // Radio en metros
+    var bufferCircle = null;
+    
+    // Esperar a que el mapa esté listo
+    setTimeout(function() {{
+        var mapElement = document.querySelector('.folium-map');
+        if (mapElement && mapElement._leaflet_map) {{
+            var map = mapElement._leaflet_map;
+            
+            // Evento de movimiento del mouse
+            map.on('mousemove', function(e) {{
+                // Remover círculo anterior si existe
+                if (bufferCircle) {{
+                    map.removeLayer(bufferCircle);
+                }}
+                
+                // Crear nuevo círculo en la posición del cursor
+                bufferCircle = L.circle(e.latlng, {{
+                    radius: bufferRadius,
+                    color: '#FFA500',      // Naranja
+                    fillColor: '#FFD700',  // Dorado
+                    fillOpacity: 0.2,
+                    weight: 2,
+                    dashArray: '5, 5'      // Línea punteada
+                }}).addTo(map);
+            }});
+            
+            // Remover círculo cuando el mouse sale del mapa
+            map.on('mouseout', function(e) {{
+                if (bufferCircle) {{
+                    map.removeLayer(bufferCircle);
+                    bufferCircle = null;
+                }}
+            }});
+            
+            // Evento de clic para mantener el círculo en la posición seleccionada
+            map.on('click', function(e) {{
+                // Remover círculo dinámico
+                if (bufferCircle) {{
+                    map.removeLayer(bufferCircle);
+                }}
+                
+                // Crear círculo fijo en la posición del clic
+                L.circle(e.latlng, {{
+                    radius: bufferRadius,
+                    color: '#FF4500',      // Rojo-naranja
+                    fillColor: '#FF6347',  // Tomate
+                    fillOpacity: 0.3,
+                    weight: 3
+                }}).addTo(map);
+                
+                // Agregar marcador en el punto seleccionado
+                L.marker(e.latlng, {{
+                    icon: L.icon({{
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    }})
+                }}).addTo(map).bindPopup('<b>Punto Seleccionado</b><br>Buffer: {st.session_state.buffer_size}m').openPopup();
+            }});
+        }}
+    }}, 500);
+    </script>
+    """
+    
+    # Agregar CSS y JS al mapa
+    mapa.get_root().html.add_child(folium.Element(cursor_css))
+    mapa.get_root().html.add_child(folium.Element(buffer_circle_js))
+    
+    # Renderizar mapa
     result = st_folium(mapa, width=900, height=600, returned_objects=["last_clicked"])
     
     # Detectar clic
@@ -238,19 +347,32 @@ elif st.session_state.step == 4:
         st.session_state.punto_lat = clicked["lat"]
         st.session_state.punto_lon = clicked["lng"]
         
-        st.success(f"✅ Punto seleccionado: Lat {clicked['lat']:.6f}, Lon {clicked['lng']:.6f}")
+        # Mostrar información del punto seleccionado con estilo mejorado
+        st.success(f"✅ **Punto seleccionado exitosamente**")
         
-        if st.button("✅ Confirmar y Generar Análisis"):
+        col_info1, col_info2, col_info3 = st.columns(3)
+        with col_info1:
+            st.metric("📍 Latitud", f"{clicked['lat']:.6f}")
+        with col_info2:
+            st.metric("📍 Longitud", f"{clicked['lng']:.6f}")
+        with col_info3:
+            st.metric("🎯 Buffer", f"{st.session_state.buffer_size}m")
+        
+        if st.button("✅ Confirmar y Generar Análisis", type="primary", use_container_width=True):
             st.session_state.step = 5
             st.rerun()
+    else:
+        st.info("👆 Haz clic sobre el mapa para seleccionar el punto de análisis")
+    
+    st.markdown("---")
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔙 Volver a Selección de Buffer"):
+        if st.button("🔙 Volver a Selección de Buffer", use_container_width=True):
             st.session_state.step = 3
             st.rerun()
     with col2:
-        if st.button("🔄 Reiniciar"):
+        if st.button("🔄 Reiniciar", use_container_width=True):
             st.session_state.step = 1
             st.rerun()
 
