@@ -234,14 +234,14 @@ elif st.session_state.step == 4:
     folium.GeoJson(
         localidad_geo,
         style_function=lambda feature: {
-            "fillColor": "#FFB366",  # Naranja claro
+            "fillColor": "#F7C28E",  # Naranja claro
             "color": "#FF0000",  # Borde rojo
             "weight": 3,
             "fillOpacity": 0.35,  # Más visible
             "interactive": True  # Importante para eventos
         },
         highlight_function=lambda feature: {
-            "fillColor": "#FFA64D",  # Naranja más intenso al hover
+            "fillColor": "#E4EB83",  # Naranja más intenso al hover
             "color": "#FF0000",
             "weight": 4,
             "fillOpacity": 0.45
