@@ -457,8 +457,8 @@ elif st.session_state.step == 5:
         mode='lines',
         fill='toself',
         name=f'Buffer {st.session_state.buffer_size}m',
-        fillcolor='rgba(255, 165, 0, 0.1)',
-        line=dict(color='orange', width=2)
+        fillcolor='rgba(255, 0, 0, 0.1)',
+        line=dict(color='red', width=2)
     ))
 
     # Agregar estaciones (MEJORADO para visualización)
@@ -551,8 +551,8 @@ elif st.session_state.step == 5:
         mode='lines',
         fill='toself',
         name=f'Buffer {st.session_state.buffer_size}m',
-        fillcolor='rgba(0, 0, 255, 0.1)',
-        line=dict(color='blue', width=2)
+        fillcolor='rgba(255, 0, 0, 0.1)',
+        line=dict(color='red', width=2)
     ))
 
     # Agregar colegios (MEJORADO para visualización)
@@ -567,7 +567,7 @@ elif st.session_state.step == 5:
             name='Colegios',
             marker=dict(
                 size=12,
-                color='purple',
+                color='green',
                 opacity=1.0,
                 symbol='circle'  # Cambio de 'school' a 'circle' para mejor visualización
             ),
@@ -632,8 +632,8 @@ elif st.session_state.step == 5:
         lon=list(buffer_wgs.exterior.xy[0]),
         mode='lines',
         name=f'Buffer {st.session_state.buffer_size}m',
-        line=dict(color='black', width=2),
-        showlegend=False
+        fillcolor='rgba(255, 0, 0, 0.1)',
+        line=dict(color='red', width=2)
     ))
 
     # Agrupar manzanas por estrato para optimizar el renderizado
@@ -674,7 +674,7 @@ elif st.session_state.step == 5:
         name='Punto de Interés',
         marker=dict(
             size=15,
-            color='white',
+            color='blue',
             opacity=1.0
         ),
         showlegend=True
@@ -686,8 +686,8 @@ elif st.session_state.step == 5:
         lon=[st.session_state.punto_lon],
         mode='markers',
         marker=dict(
-            size=18,
-            color='black',
+            size=15,
+            color='blue',
             opacity=1.0
         ),
         showlegend=False
@@ -706,7 +706,7 @@ elif st.session_state.step == 5:
             y=0.99,
             xanchor="left",
             x=0.01,
-            bgcolor="rgba(255, 255, 255, 0.8)"
+            bgcolor="255, 0, 0, 0.1)"
         )
     )
 
@@ -777,8 +777,10 @@ elif st.session_state.step == 5:
         lon=list(buffer_wgs.exterior.xy[0]),
         mode='lines',
         name=f'Buffer {st.session_state.buffer_size}m',
-        line=dict(color='black', width=2),
+        fillcolor='rgba(255, 0, 0, 0.1)',
+        line=dict(color='red', width=2),
         showlegend=False
+        
     ))
 
     # Agrupar manzanas por uso POT para optimizar el renderizado
@@ -819,7 +821,7 @@ elif st.session_state.step == 5:
         name='Punto de Interés',
         marker=dict(
             size=15,
-            color='white',
+            color='blue',
             opacity=1.0
         ),
         showlegend=True
@@ -831,8 +833,8 @@ elif st.session_state.step == 5:
         lon=[st.session_state.punto_lon],
         mode='markers',
         marker=dict(
-            size=18,
-            color='black',
+            size=15,
+            color='blue',
             opacity=1.0
         ),
         showlegend=False
@@ -851,7 +853,7 @@ elif st.session_state.step == 5:
             y=0.99,
             xanchor="left",
             x=0.01,
-            bgcolor="rgba(255, 255, 255, 0.8)"
+            bgcolor="rgba(255, 0, 0, 0.1)"
         )
     )
 
