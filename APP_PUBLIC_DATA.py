@@ -487,7 +487,7 @@ elif st.session_state.step == 5:
             st.metric("Densidad de estaciones\n (por km²)", f"{densidad:.2f}")
 
 
-        # ========================================
+    # ========================================
     # VISUALIZACIÓN: MAPA DE CENTROS EDUCATIVOS
     # ========================================
     st.markdown("""
@@ -502,23 +502,33 @@ elif st.session_state.step == 5:
     # Detectar colegios dentro del área circular de análisis
     colegios_area = []
     colegios_coords = []
+    nombres_colegios = []  # Nueva lista para almacenar nombres
 
     for _, row in colegios.iterrows():
         geom = row["geometry"]
+        nombres_row = row.get("nombres", "Colegio sin nombre")  # Obtener nombres de la fila
+        
+        # Separar nombres si hay múltiples colegios (separados por ";")
+        lista_nombres = [n.strip() for n in str(nombres_row).split(";")]
+        
         # Manejar MultiPoint y Point simple
         if hasattr(geom, "geoms"):
-            for pt in geom.geoms:
+            for idx, pt in enumerate(geom.geoms):
                 if area_wgs.contains(pt):
                     coord_tuple = (pt.x, pt.y)
                     if coord_tuple not in colegios_coords:
                         colegios_area.append(pt)
                         colegios_coords.append(coord_tuple)
+                        # Asignar nombre correspondiente o genérico si no hay suficientes
+                        nombre = lista_nombres[idx] if idx < len(lista_nombres) else lista_nombres[0]
+                        nombres_colegios.append(nombre)
         elif isinstance(geom, Point):
             if area_wgs.contains(geom):
                 coord_tuple = (geom.x, geom.y)
                 if coord_tuple not in colegios_coords:
                     colegios_area.append(geom)
                     colegios_coords.append(coord_tuple)
+                    nombres_colegios.append(lista_nombres[0] if lista_nombres else "Colegio")
 
     fig_educacion = go.Figure()
 
@@ -533,7 +543,7 @@ elif st.session_state.step == 5:
         line=dict(color='#6C3483', width=2)
     ))
 
-    # Puntos de colegios (círculo morado)
+    # Puntos de colegios con nombres reales en el tooltip
     if colegios_area:
         lats = [pt.y for pt in colegios_area]
         lons = [pt.x for pt in colegios_area]
@@ -547,9 +557,9 @@ elif st.session_state.step == 5:
                 size=13,
                 color='#8E44AD',   # Morado
                 opacity=0.88,
-                symbol='circle'   # Para distinguirse de estaciones y punto central
+                symbol='circle'
             ),
-            text=[f'Colegio {i+1}' for i in range(len(colegios_area))],
+            text=nombres_colegios,  # Usar nombres reales
             hoverinfo='text'
         ))
 
