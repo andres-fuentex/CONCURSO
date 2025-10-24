@@ -13,13 +13,33 @@ import pandas as pd
 import time
 
 # --- Configuración de la Página ---
-st.set_page_config(page_title="Análisis Territorial Bogotá", page_icon="🗺️", layout="wide")
-st.title("🗺️ Análisis Territorial de Bogotá - Sistema de Diagnóstico")
+st.set_page_config(
+    page_title="Bogotá Inteligente: Diagnóstico Territorial",
+    page_icon="🗺️",
+    layout="wide"
+)
+
+st.title("🚀 Bogotá Inteligente: Explora el Potencial de tu Ciudad con Datos")
+
+st.markdown("""
+**Bienvenido al futuro del análisis urbano en Bogotá.**
+
+Imagina poder mapear, entender y transformar tu entorno utilizando la ciencia de datos, ¡todo en un solo clic!
+
+Esta plataforma pone en tus manos el poder de la información geoespacial pública para revelar oportunidades de desarrollo, detectar brechas de servicios y optimizar decisiones en planificación territorial.
+
+A través de una experiencia interactiva, recorrerás paso a paso el proceso de diagnóstico: selecciona tu localidad, explora el área de influencia y descubre —de manera visual, automática y comparativa— los servicios, la educación, el transporte y mucho más, con el respaldo de datos abiertos.
+
+_Convierte los datos en visión. Descubre el potencial oculto de cada rincón de Bogotá. El análisis comienza aquí._
+""")
+
+
 
 # --- Función cacheada para la carga de datos ---
 @st.cache_data
 def cargar_datasets():
-    """Carga todos los datasets geográficos desde GitHub"""
+    """Carga los datasets geográficos urbanos desde fuentes abiertas"""
+
     datasets = {
         "localidades": "https://github.com/andres-fuentex/tfm-avm-bogota/raw/main/datos_visualizacion/datos_geograficos_geo/dim_localidad.geojson",
         "areas": "https://github.com/andres-fuentex/tfm-avm-bogota/raw/main/datos_visualizacion/datos_geograficos_geo/dim_area.geojson",
@@ -27,18 +47,32 @@ def cargar_datasets():
         "transporte": "https://github.com/andres-fuentex/tfm-avm-bogota/raw/main/datos_visualizacion/datos_geograficos_geo/dim_transporte.geojson",
         "colegios": "https://github.com/andres-fuentex/tfm-avm-bogota/raw/main/datos_visualizacion/datos_geograficos_geo/dim_colegios.geojson"
     }
-    
+
+    # --- Sección UI para carga de datos ---
+    st.info(
+        "🔄 **Preparando el escenario digital:**\n\n"
+        "En segundos tendrás acceso a la radiografía inteligente de Bogotá, utilizando fuentes oficiales de datos abiertos urbanísticos."
+    )
+
+    nombre_ui = {
+        "localidades": "Localidades",
+        "areas": "Áreas de desarrollo",
+        "manzanas": "Manzanas urbanas",
+        "transporte": "Estaciones de transporte",
+        "colegios": "Centros educativos"
+    }
+
     dataframes = {}
     total = len(datasets)
-    progress_bar = st.progress(0, text="Iniciando carga de datos...")
-    
+    progress_bar = st.progress(0, text="⏳ Conectando con bases de datos urbanas...")
+
     for idx, (nombre, url) in enumerate(datasets.items(), start=1):
-        progress_text = f"Cargando {nombre} ({idx}/{total})..."
+        progress_text = f"🗂️ Descargando {nombre_ui.get(nombre, nombre.capitalize())} ({idx}/{total})..."
         progress_bar.progress(idx / total, text=progress_text)
-        
+
         max_retries = 3
         retry_delay = 2
-        
+
         for attempt in range(max_retries):
             try:
                 response = requests.get(url, timeout=30)
@@ -49,21 +83,24 @@ def cargar_datasets():
                 )
                 break
             except requests.exceptions.RequestException as e:
-                st.warning(f"Intento {attempt + 1}/{max_retries} fallido al cargar {nombre}: {e}")
+                st.warning(f"🤔 Intento {attempt + 1}/{max_retries} fallido al cargar **{nombre_ui.get(nombre, nombre)}**: {e}")
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay)
                 else:
-                    st.error(f"Error al cargar {nombre} después de {max_retries} intentos")
+                    st.error(f"❌ No se pudo cargar **{nombre_ui.get(nombre, nombre)}** luego de varios intentos. "
+                             "Verifica tu conexión o intenta nuevamente más tarde.")
                     return None
             except json.JSONDecodeError as e:
-                st.error(f"Error al decodificar JSON para {nombre}: {e}")
+                st.error(f"❌ Error procesando información de **{nombre_ui.get(nombre, nombre)}**. "
+                         "Prueba más tarde o contacta soporte.")
                 return None
             except Exception as e:
-                st.error(f"Error al procesar {nombre}: {e}")
+                st.error(f"❌ Error inesperado al procesar **{nombre_ui.get(nombre, nombre)}**: {e}")
                 return None
-    
+
     progress_bar.empty()
     return dataframes
+
 
 # --- Inicialización del estado ---
 if "step" not in st.session_state:
@@ -74,62 +111,77 @@ if "step" not in st.session_state:
 # ========================================
 if st.session_state.step == 1:
     st.markdown("""
-    ### Bienvenido al Sistema de Análisis Territorial
-    
-    Este sistema permite realizar diagnósticos territoriales de las localidades de Bogotá,
-    analizando la disponibilidad de servicios y equipamientos urbanos en áreas específicas.
+    ### 🚦 Punto de partida: Activando el diagnóstico urbano
+
+    Antes de comenzar, el sistema recopila y verifica los datos esenciales de la ciudad para tu análisis.
+    Este proceso conectará fuentes oficiales y consolidará información geoespacial clave para que tu exploración territorial sea sólida y confiable.
     """)
     
-    with st.spinner('Cargando datasets geográficos...'):
+    with st.spinner('⏳ Conectando y descargando los datasets urbanos...'):
         dataframes = cargar_datasets()
         
     if dataframes:
-        st.success('✅ Todos los datos han sido cargados correctamente.')
-        if st.button("▶️ Iniciar Análisis"):
+        st.success('✅ Datos cargados exitosamente. ¡Listo para iniciar tu análisis!')
+        if st.button("🔍 Empezar diagnóstico"):
             for nombre, df in dataframes.items():
                 st.session_state[nombre] = df
             st.session_state.step = 2
             st.rerun()
     else:
-        st.error("❌ Error al cargar los datasets. Por favor, revise las URLs o la conexión.")
+        st.error("❌ Ocurrió un problema al cargar los datos. Verifica tu conexión o inténtalo nuevamente en unos minutos.")
 
 # ========================================
 # PASO 2: SELECCIÓN DE LOCALIDAD
 # ========================================
 elif st.session_state.step == 2:
-    st.header("🌆 Paso 1: Seleccione su Localidad")
-    st.markdown("Haz clic sobre la localidad que deseas analizar:")
-    
+    st.header("🌆 Paso 1: Selecciona tu Localidad de Interés")
+
+    st.markdown("""
+    **¿Dónde comienza tu análisis?**
+    Haz clic sobre la localidad de Bogotá que deseas explorar. El sistema te mostrará un mapa interactivo con límites administrativos oficiales.
+    El color azul suave resalta el área elegida; al pasar el mouse, el borde rojo reforzará tu selección. Toda la plataforma mantiene un estilo gráfico uniforme para garantizar claridad y profesionalismo.
+    """)
+
+    # Estilos generales unificados para todas las visualizaciones
+    COLOR_FRAME = "#131313"        # Marco general, negro-gris
+    COLOR_FILL = "#3D8EDB"         # Relleno principal, azul corporativo
+    COLOR_HI_FILL = "#E7F5FF"      # Relleno al hover, azul muy claro
+    COLOR_BORDER = "#C22323"       # Borde destacado en hover, rojo intenso
+
     localidades = st.session_state.localidades
-    
+
     # Crear mapa interactivo con Folium
     bounds = localidades.total_bounds
     center = [(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2]
-    
+
     mapa = folium.Map(location=center, zoom_start=11, tiles="CartoDB positron")
     
+    # Marco y estilos de localidad
     folium.GeoJson(
         localidades,
         style_function=lambda feature: {
-            "fillColor": "#3388ff",
-            "color": "black",
+            "fillColor": COLOR_FILL,
+            "color": COLOR_FRAME,
             "weight": 2,
-            "fillOpacity": 0.3
+            "fillOpacity": 0.35,       # Un poco más visible
         },
         highlight_function=lambda feature: {
             "weight": 3,
-            "color": "#FF6B6B",
-            "fillOpacity": 0.6
+            "color": COLOR_BORDER,
+            "fillColor": COLOR_HI_FILL,
+            "fillOpacity": 0.55,
         },
         tooltip=folium.GeoJsonTooltip(
             fields=["nombre_localidad"],
+            aliases=["Localidad:"],
             labels=False,
             sticky=True
         )
     ).add_to(mapa)
-    
+
+    # Uniformidad en tamaño del lienzo para todas las visualizaciones
     result = st_folium(mapa, width=900, height=600, returned_objects=["last_clicked"])
-    
+
     # Detectar clic en localidad
     clicked = result.get("last_clicked")
     if clicked and "lat" in clicked and "lng" in clicked:
@@ -140,124 +192,119 @@ elif st.session_state.step == 2:
                 break
         else:
             st.session_state.localidad_clic = None
-    
+
     # Mostrar localidad seleccionada
     if "localidad_clic" in st.session_state and st.session_state.localidad_clic:
         st.success(f"✅ Localidad seleccionada: **{st.session_state.localidad_clic}**")
-        
         if st.button("✅ Confirmar y Continuar"):
             st.session_state.localidad_sel = st.session_state.localidad_clic
             st.session_state.step = 3
             st.rerun()
-    
+
+    st.markdown("---")
     if st.button("🔄 Volver al Inicio"):
         st.session_state.step = 1
         st.rerun()
 
+
 # ========================================
-# PASO 3: SELECCIÓN DE TAMAÑO DE BUFFER
+# PASO 3: DEFINIR ÁREA DE INFLUENCIA
 # ========================================
 elif st.session_state.step == 3:
-    st.header("📏 Paso 2: Seleccione el Tamaño del Buffer")
-    
+    st.header("📏 Paso 2: Define el radio de tu análisis urbano")
+
     st.markdown(f"""
-    Localidad seleccionada: **{st.session_state.localidad_sel}**
+    **Localidad seleccionada:** `{st.session_state.localidad_sel}`  
     
-    El buffer es el área de influencia que se analizará alrededor del punto de interés.
-    Seleccione el radio en metros:
+    El radio de análisis determina el área de influencia que se estudiará alrededor del punto que escojas en el mapa.
+    Decide qué tan amplio quieres que sea tu contexto urbano y ajusta el valor en metros para comparar sectores de forma homogénea.
     """)
-    
-    buffer_size = st.slider(
-        "Radio del buffer (metros)",
+
+    # Saltos de 300 en 300 para mejor usabilidad mobile/desktop
+    radio_analisis = st.slider(
+        "Selecciona el radio de análisis (metros)",
         min_value=300,
-        max_value=2000,
-        value=500,
-        step=100,
-        help="Distancia de análisis desde el punto seleccionado"
+        max_value=2100,
+        value=600,
+        step=300,
+        help="Entre más grande el radio, más contexto y servicios urbanos tendrás en el análisis."
     )
-    
-    st.session_state.buffer_size = buffer_size
-    
-    st.info(f"📍 Se analizará un área de **{buffer_size} metros** alrededor del punto seleccionado")
-    
+    st.session_state.radio_analisis = radio_analisis
+
+    st.info(f"🟠 El análisis incluirá una zona de **{radio_analisis} metros** alrededor del punto que selecciones en el siguiente paso.")
+
+    # Botones de navegación
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔙 Volver a Selección de Localidad"):
+        if st.button("🔙 Volver a selección de localidad"):
             st.session_state.step = 2
             st.rerun()
     with col2:
-        if st.button("✅ Confirmar y Continuar"):
+        if st.button("➡️ Continuar"):
             st.session_state.step = 4
             st.rerun()
 
 
 # ========================================
-# PASO 4: CLIC SOBRE PUNTO DE INTERÉS
+# PASO 4: SELECCIÓN DE PUNTO DE INTERÉS
 # ========================================
 elif st.session_state.step == 4:
-    st.header("📍 Paso 3: Seleccione el Punto de Interés")
-    
+    st.header("📍 Paso 3: Selecciona el punto sobre el cual analizarás el entorno")
+
     st.markdown(f"""
-    **Localidad:** {st.session_state.localidad_sel}  
-    **Buffer:** {st.session_state.buffer_size} metros
-    
-    Haz clic sobre el mapa para seleccionar el punto de interés a analizar:
+    **Localidad elegida:** `{st.session_state.localidad_sel}`  
+    **Radio de análisis:** `{st.session_state.radio_analisis} metros`
+
+    Haz clic directamente sobre la zona que deseas estudiar en detalle. 
+    El sistema aplicará el radio seleccionado para analizar el entorno urbano alrededor del punto que escojas.
     """)
-    
+
     localidades = st.session_state.localidades
-    manzanas = st.session_state.manzanas
-    
-    # Filtrar por localidad
+
+    # Filtrar por localidad seleccionada
     cod_localidad = localidades[
         localidades["nombre_localidad"] == st.session_state.localidad_sel
     ]["num_localidad"].values[0]
-    
-    # Obtener geometría de la localidad seleccionada
+
     localidad_geo = localidades[localidades["num_localidad"] == cod_localidad]
-    
-    # Crear mapa de la localidad
+
+    # Colores uniformes
+    COLOR_FILL = "#E4EB83"  # Relleno claro
+    COLOR_BORDER = "#FF0000"  # Borde rojo
+
+    # Crear mapa con cursor cruz
     bounds = localidad_geo.total_bounds
     center = [(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2]
-    
-    # Crear mapa
+
     mapa = folium.Map(
-        location=center, 
-        zoom_start=12, 
+        location=center,
+        zoom_start=12,
         tiles="CartoDB positron",
         prefer_canvas=True
     )
-    
-    # Agregar polígono de la localidad con los colores que te gustaron
+
+    # Polígono de localidad visual uniforme
     folium.GeoJson(
         localidad_geo,
         style_function=lambda feature: {
-            "fillColor": "#E4EB83",  # Naranja claro (que te gustó)
-            "color": "#FF0000",  # Borde rojo
+            "fillColor": COLOR_FILL,
+            "color": COLOR_BORDER,
             "weight": 3,
             "fillOpacity": 0.35,
             "interactive": True
         },
         highlight_function=lambda feature: {
-            "fillColor": "#F7C28E",  # Verde-amarillo al hover (que te gustó)
-            "color": "#FF0000",
+            "fillColor": "#F7C28E",
+            "color": COLOR_BORDER,
             "weight": 4,
             "fillOpacity": 0.45
         }
     ).add_to(mapa)
-    
-    # Agregar CSS para cursor de cruz
+
+    # CSS para cursor de cruz
     cursor_css = """
     <style>
-        .folium-map {
-            cursor: crosshair !important;
-        }
-        .leaflet-container {
-            cursor: crosshair !important;
-        }
-        .leaflet-interactive {
-            cursor: crosshair !important;
-        }
-        .leaflet-grab {
+        .folium-map, .leaflet-container, .leaflet-interactive, .leaflet-grab {
             cursor: crosshair !important;
         }
         .leaflet-dragging .leaflet-grab {
@@ -265,356 +312,320 @@ elif st.session_state.step == 4:
         }
     </style>
     """
-    
-    # Agregar CSS al mapa
     mapa.get_root().html.add_child(folium.Element(cursor_css))
-    
-    # Renderizar mapa (ESTO FALTABA)
+
+    # Renderizar mapa interactivo
     result = st_folium(mapa, width=900, height=600, returned_objects=["last_clicked"], key="mapa_punto_interes")
-    
-    # Detectar clic
+
+    # Captura clic y muestra detalles con storytelling
     clicked = result.get("last_clicked")
     if clicked and "lat" in clicked and "lng" in clicked:
         st.session_state.punto_lat = clicked["lat"]
         st.session_state.punto_lon = clicked["lng"]
-        
-        # Mostrar información del punto seleccionado con estilo mejorado
-        st.success(f"✅ **Punto seleccionado exitosamente**")
-        
-        col_info1, col_info2, col_info3 = st.columns(3)
-        with col_info1:
-            st.metric("📍 Latitud", f"{clicked['lat']:.6f}")
-        with col_info2:
-            st.metric("📍 Longitud", f"{clicked['lng']:.6f}")
-        with col_info3:
-            st.metric("🎯 Buffer", f"{st.session_state.buffer_size}m")
-        
-        if st.button("✅ Confirmar y Generar Análisis", type="primary", use_container_width=True):
+
+        st.success(
+            f"📍 Punto seleccionado correctamente. "
+            f"El análisis de entorno abarcará un radio de `{st.session_state.radio_analisis} metros` desde aquí."
+        )
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Latitud", f"{clicked['lat']:.6f}")
+        with col2:
+            st.metric("Longitud", f"{clicked['lng']:.6f}")
+        with col3:
+            st.metric("Radio de análisis", f"{st.session_state.radio_analisis} m")
+
+        if st.button("✅ Confirmar y generar visualizaciones", type="primary", use_container_width=True):
             st.session_state.step = 5
             st.rerun()
     else:
-        st.info("👆 Haz clic sobre el mapa para seleccionar el punto de análisis")
-    
+        st.info("👆 Haz clic sobre el mapa para elegir tu punto de estudio.")
+
     st.markdown("---")
-    
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔙 Volver a Selección de Buffer", use_container_width=True):
+        if st.button("🔙 Volver al paso anterior", use_container_width=True):
             st.session_state.step = 3
             st.rerun()
     with col2:
-        if st.button("🔄 Reiniciar", use_container_width=True):
+        if st.button("🔄 Reiniciar análisis", use_container_width=True):
             st.session_state.step = 1
             st.rerun()
-
 
 # ========================================
 # PASO 5: GENERACIÓN DE MAPAS Y ANÁLISIS
 # ========================================
 elif st.session_state.step == 5:
-    st.header("📊 Análisis Territorial Completo")
-    
+    st.header("📊 Diagnóstico Urbano Completo")
+
     st.markdown(f"""
-    **Localidad:** {st.session_state.localidad_sel}  
-    **Buffer:** {st.session_state.buffer_size} metros  
-    **Punto:** Lat {st.session_state.punto_lat:.6f}, Lon {st.session_state.punto_lon:.6f}
-    """)
-    
+    <b>Localidad seleccionada:</b> {st.session_state.localidad_sel}  
+    <b>Radio de análisis:</b> {st.session_state.radio_analisis} metros  
+    <b>Punto de interés:</b> Lat {st.session_state.punto_lat:.6f}, Lon {st.session_state.punto_lon:.6f}
+
+    La herramienta generará visualizaciones y métricas que describen el entorno urbano alrededor del punto elegido. Analiza la densidad, acceso a servicios y el contexto socioespacial de la zona seleccionada.
+    """, unsafe_allow_html=True)
+
     # Cargar datos
     localidades = st.session_state.localidades
     manzanas = st.session_state.manzanas
     transporte = st.session_state.transporte
     colegios = st.session_state.colegios
     areas = st.session_state.areas
-    
+
     # Obtener código de localidad
     cod_localidad = localidades[
         localidades["nombre_localidad"] == st.session_state.localidad_sel
     ]["num_localidad"].values[0]
-    
-    # Crear punto y buffer
+
+    # Crear punto y área de análisis
     punto = Point(st.session_state.punto_lon, st.session_state.punto_lat)
     punto_gdf = gpd.GeoDataFrame([{"geometry": punto}], crs="EPSG:4326")
     punto_proj = punto_gdf.to_crs(epsg=3116)
-    
-    buffer_proj = punto_proj.buffer(st.session_state.buffer_size)
-    buffer_wgs = buffer_proj.to_crs(epsg=4326).iloc[0]
-    
-    # Filtrar datos dentro del buffer
-    manzanas_buffer = manzanas[manzanas.geometry.intersects(buffer_wgs)]
-    
-    # Contar estaciones de transporte dentro del buffer
-    estaciones_buffer = []
+    area_proj = punto_proj.buffer(st.session_state.radio_analisis)
+    area_wgs = area_proj.to_crs(epsg=4326).iloc[0]
+
+    # Filtrar datos dentro del área de análisis
+    manzanas_zona = manzanas[manzanas.geometry.intersects(area_wgs)]
+
+    # Contar estaciones de transporte dentro del área de análisis
+    estaciones_zona = []
     for _, row in transporte.iterrows():
         if hasattr(row["geometry"], "geoms"):
             for pt in row["geometry"].geoms:
-                if buffer_wgs.contains(pt):
-                    estaciones_buffer.append(pt)
+                if area_wgs.contains(pt):
+                    estaciones_zona.append(pt)
         elif isinstance(row["geometry"], Point):
-            if buffer_wgs.contains(row["geometry"]):
-                estaciones_buffer.append(row["geometry"])
-    
-    # Contar colegios dentro del buffer
-    colegios_buffer = []
+            if area_wgs.contains(row["geometry"]):
+                estaciones_zona.append(row["geometry"])
+
+    # Contar colegios dentro del área de análisis
+    colegios_zona = []
     for _, row in colegios.iterrows():
         if hasattr(row["geometry"], "geoms"):
             for pt in row["geometry"].geoms:
-                if buffer_wgs.contains(pt):
-                    colegios_buffer.append(pt)
+                if area_wgs.contains(pt):
+                    colegios_zona.append(pt)
         elif isinstance(row["geometry"], Point):
-            if buffer_wgs.contains(row["geometry"]):
-                colegios_buffer.append(row["geometry"])
-    
-    # ========================================
-    # IMAGEN 1: Mapa buffer con cantidad de manzanas
-    # ========================================
-    st.markdown("### 📍 Imagen 1: Buffer con Manzanas")
-    
-    fig1 = go.Figure()
-    
-    # Agregar buffer
-    fig1.add_trace(go.Scattermapbox(
-        lat=list(buffer_wgs.exterior.xy[1]),
-        lon=list(buffer_wgs.exterior.xy[0]),
-        mode='lines',
-        fill='toself',
-        name=f'Buffer {st.session_state.buffer_size}m',
-        fillcolor='rgba(255, 0, 0, 0.1)',
-        line=dict(color='red', width=2)
-    ))
-    
-    # Agregar manzanas
-    for _, manzana in manzanas_buffer.iterrows():
-        coords = manzana.geometry.exterior.coords
-        fig1.add_trace(go.Scattermapbox(
-            lat=[c[1] for c in coords],
-            lon=[c[0] for c in coords],
-            mode='lines',
-            fill='toself',
-            fillcolor='rgba(76, 175, 80, 0.4)',
-            line=dict(color='#2E7D32', width=1),
-            showlegend=False
-        ))
-    
-    # Agregar punto central
-    fig1.add_trace(go.Scattermapbox(
-        lat=[st.session_state.punto_lat],
-        lon=[st.session_state.punto_lon],
-        mode='markers',
-        name='Punto de Interés',
-        marker=dict(size=12, color='blue')
-    ))
-    
-    fig1.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
-        mapbox_zoom=14,
-        margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        title=f"Buffer con {len(manzanas_buffer)} Manzanas",
-        showlegend=True
-    )
-    
-    st.plotly_chart(fig1, use_container_width=True)
-    st.metric("Total de Manzanas", len(manzanas_buffer))
-    
-    # ========================================
-    # IMAGEN 2: Mapa buffer con estaciones de transporte
-    # ========================================
-    # ========================================
-    # IMAGEN 2: Mapa buffer con estaciones de transporte
-    # ========================================
-    st.markdown("### 🚇 Imagen 2: Buffer con Estaciones de Transporte")
+            if area_wgs.contains(row["geometry"]):
+                colegios_zona.append(row["geometry"])
 
-    # Filtrar estaciones dentro del buffer (CORREGIDO)
-    estaciones_buffer = []
-    estaciones_coords = []  # Para evitar duplicados
+    
+ 
+    
+    # ========================================
+    # VISUALIZACIÓN: MAPA DE ESTACIONES DE TRANSPORTE
+    # ========================================
+    st.markdown("""
+    ### 🚇 Accesibilidad en Transporte Público
+
+    En este mapa puedes visualizar todas las estaciones de transporte público dentro del área de análisis determinada. 
+    Cada punto rojo representa una estación disponible alrededor del punto seleccionado, ayudándote a entender la conectividad y accesibilidad de la zona.
+
+    El área sombreada muestra el alcance del entorno estudiado, manteniendo la uniformidad estética en todos los mapas y métricas urbanas.
+    """)
+
+    # Detecta las estaciones dentro de la zona circular de análisis
+    estaciones_area = []
+    estaciones_coords = []
 
     for _, row in transporte.iterrows():
         geom = row["geometry"]
-        
-        # Manejar MultiPoint
+        # Manejar Multipoint y Point simple
         if hasattr(geom, "geoms"):
             for pt in geom.geoms:
-                if buffer_wgs.contains(pt):
+                if area_wgs.contains(pt):
                     coord_tuple = (pt.x, pt.y)
                     if coord_tuple not in estaciones_coords:
-                        estaciones_buffer.append(pt)
+                        estaciones_area.append(pt)
                         estaciones_coords.append(coord_tuple)
-        # Manejar Point simple
         elif isinstance(geom, Point):
-            if buffer_wgs.contains(geom):
+            if area_wgs.contains(geom):
                 coord_tuple = (geom.x, geom.y)
                 if coord_tuple not in estaciones_coords:
-                    estaciones_buffer.append(geom)
+                    estaciones_area.append(geom)
                     estaciones_coords.append(coord_tuple)
 
-    fig2 = go.Figure()
+    fig_transporte = go.Figure()
 
-    # Agregar buffer
-    fig2.add_trace(go.Scattermapbox(
-        lat=list(buffer_wgs.exterior.xy[1]),
-        lon=list(buffer_wgs.exterior.xy[0]),
+    # Render destacado y uniforme del área
+    fig_transporte.add_trace(go.Scattermapbox(
+        lat=list(area_wgs.exterior.xy[1]),
+        lon=list(area_wgs.exterior.xy[0]),
         mode='lines',
         fill='toself',
-        name=f'Buffer {st.session_state.buffer_size}m',
-        fillcolor='rgba(255, 165, 0, 0.1)',
+        name=f'Área de análisis ({st.session_state.radio_analisis}m)',
+        fillcolor='rgba(255, 165, 0, 0.12)',  # Naranja muy tenue
         line=dict(color='orange', width=2)
     ))
 
-    # Agregar estaciones (MEJORADO para visualización)
-    if estaciones_buffer:
-        lats = [pt.y for pt in estaciones_buffer]
-        lons = [pt.x for pt in estaciones_buffer]
-        
-        fig2.add_trace(go.Scattermapbox(
+    # Los puntos de estaciones con estilo uniforme (circular rojo, fácil de distinguir)
+    if estaciones_area:
+        lats = [pt.y for pt in estaciones_area]
+        lons = [pt.x for pt in estaciones_area]
+
+        fig_transporte.add_trace(go.Scattermapbox(
             lat=lats,
             lon=lons,
             mode='markers',
             name='Estaciones de Transporte',
             marker=dict(
-                size=12,
-                color='red',
-                opacity=1.0,
-                symbol='circle'  # Cambio de 'rail' a 'circle' para mejor visualización
+                size=14,
+                color='#E63946',    # Rojo intenso
+                opacity=0.95,
+                symbol='square'     # Para distinguir del punto central y otros servicios
             ),
-            text=[f'Estación {i+1}' for i in range(len(estaciones_buffer))],
+            text=[f'Estación {i+1}' for i in range(len(estaciones_area))],
             hoverinfo='text'
         ))
 
-    # Agregar punto central
-    fig2.add_trace(go.Scattermapbox(
+    # Punto central seleccionado por el usuario (azul destacado)
+    fig_transporte.add_trace(go.Scattermapbox(
         lat=[st.session_state.punto_lat],
         lon=[st.session_state.punto_lon],
         mode='markers',
-        name='Punto de Interés',
+        name='Punto de interés',
         marker=dict(
-            size=15,
-            color='blue'
+            size=17,
+            color='#3498DB'  # Azul vibrante uniforme
         )
     ))
 
-    fig2.update_layout(
+    fig_transporte.update_layout(
         mapbox_style="carto-positron",
         mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
         mapbox_zoom=14,
         margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        title=f"Buffer con {len(estaciones_buffer)} Estaciones de Transporte",
+        title=f"Estaciones de transporte público (radio {st.session_state.radio_analisis} m)",
         showlegend=True,
         height=600
     )
 
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig_transporte, use_container_width=True)
 
-    # Métricas adicionales
+    # Métricas visuales uniformes
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("Total de Estaciones en Buffer", len(estaciones_buffer))
+        st.metric("Estaciones en el entorno", len(estaciones_area))
     with col2:
-        if estaciones_buffer:
-            densidad = len(estaciones_buffer) / (3.14159 * (st.session_state.buffer_size/1000)**2)
-            st.metric("Densidad (estaciones/km²)", f"{densidad:.2f}")
-    
-    # ========================================
-    # IMAGEN 3: Mapa buffer con colegios
-    # ========================================
-    st.markdown("### 🏫 Imagen 3: Buffer con Colegios")
+        if estaciones_area:
+            densidad = len(estaciones_area) / (3.14159 * (st.session_state.radio_analisis / 1000) ** 2)
+            st.metric("Densidad de estaciones\n (por km²)", f"{densidad:.2f}")
 
-    # Filtrar colegios dentro del buffer (CORREGIDO)
-    colegios_buffer = []
-    colegios_coords = []  # Para evitar duplicados
+        # ========================================
+    # VISUALIZACIÓN: MAPA DE CENTROS EDUCATIVOS
+    # ========================================
+    st.markdown("""
+    ### 🏫 Oferta Educativa en el Entorno
+
+    Visualiza todos los centros educativos dentro del área de análisis que seleccionaste. 
+    Cada punto morado representa la ubicación de un colegio disponible para la comunidad, facilitando la evaluación de acceso educativo y nivel de cobertura del sector.
+
+    El área sombreada corresponde a los metros de radio definidos, manteniendo la uniformidad visual en toda la plataforma.
+    """)
+
+    # Detectar colegios dentro del área circular de análisis
+    colegios_area = []
+    colegios_coords = []
 
     for _, row in colegios.iterrows():
         geom = row["geometry"]
-        
-        # Manejar MultiPoint
+        # Manejar MultiPoint y Point simple
         if hasattr(geom, "geoms"):
             for pt in geom.geoms:
-                if buffer_wgs.contains(pt):
+                if area_wgs.contains(pt):
                     coord_tuple = (pt.x, pt.y)
                     if coord_tuple not in colegios_coords:
-                        colegios_buffer.append(pt)
+                        colegios_area.append(pt)
                         colegios_coords.append(coord_tuple)
-        # Manejar Point simple
         elif isinstance(geom, Point):
-            if buffer_wgs.contains(geom):
+            if area_wgs.contains(geom):
                 coord_tuple = (geom.x, geom.y)
                 if coord_tuple not in colegios_coords:
-                    colegios_buffer.append(geom)
+                    colegios_area.append(geom)
                     colegios_coords.append(coord_tuple)
 
-    fig3 = go.Figure()
+    fig_educacion = go.Figure()
 
-    # Agregar buffer
-    fig3.add_trace(go.Scattermapbox(
-        lat=list(buffer_wgs.exterior.xy[1]),
-        lon=list(buffer_wgs.exterior.xy[0]),
+    # Área de análisis sombreada con estilo uniforme
+    fig_educacion.add_trace(go.Scattermapbox(
+        lat=list(area_wgs.exterior.xy[1]),
+        lon=list(area_wgs.exterior.xy[0]),
         mode='lines',
         fill='toself',
-        name=f'Buffer {st.session_state.buffer_size}m',
-        fillcolor='rgba(0, 0, 255, 0.1)',
-        line=dict(color='blue', width=2)
+        name=f'Área de análisis ({st.session_state.radio_analisis}m)',
+        fillcolor='rgba(128, 0, 128, 0.07)',  # Morado muy suave
+        line=dict(color='#6C3483', width=2)
     ))
 
-    # Agregar colegios (MEJORADO para visualización)
-    if colegios_buffer:
-        lats = [pt.y for pt in colegios_buffer]
-        lons = [pt.x for pt in colegios_buffer]
-        
-        fig3.add_trace(go.Scattermapbox(
+    # Puntos de colegios (círculo morado)
+    if colegios_area:
+        lats = [pt.y for pt in colegios_area]
+        lons = [pt.x for pt in colegios_area]
+
+        fig_educacion.add_trace(go.Scattermapbox(
             lat=lats,
             lon=lons,
             mode='markers',
             name='Colegios',
             marker=dict(
-                size=12,
-                color='purple',
-                opacity=1.0,
-                symbol='circle'  # Cambio de 'school' a 'circle' para mejor visualización
+                size=13,
+                color='#8E44AD',   # Morado
+                opacity=0.88,
+                symbol='diamond'   # Para distinguirse de estaciones y punto central
             ),
-            text=[f'Colegio {i+1}' for i in range(len(colegios_buffer))],
+            text=[f'Colegio {i+1}' for i in range(len(colegios_area))],
             hoverinfo='text'
         ))
 
-    # Agregar punto central
-    fig3.add_trace(go.Scattermapbox(
+    # Punto central seleccionado por el usuario (azul estándar del flujo)
+    fig_educacion.add_trace(go.Scattermapbox(
         lat=[st.session_state.punto_lat],
         lon=[st.session_state.punto_lon],
         mode='markers',
-        name='Punto de Interés',
+        name='Punto de interés',
         marker=dict(
-            size=15,
-            color='blue'
+            size=17,
+            color='#3498DB'
         )
     ))
 
-    fig3.update_layout(
+    fig_educacion.update_layout(
         mapbox_style="carto-positron",
         mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
         mapbox_zoom=14,
         margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        title=f"Buffer con {len(colegios_buffer)} Colegios",
+        title=f"Centros educativos en el entorno ({len(colegios_area)} colegios)",
         showlegend=True,
         height=600
     )
 
-    st.plotly_chart(fig3, use_container_width=True)
+    st.plotly_chart(fig_educacion, use_container_width=True)
 
-    # Métricas adicionales
+    # Métricas profesionalizadas
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("Total de Colegios en Buffer", len(colegios_buffer))
+        st.metric("Colegios en el entorno", len(colegios_area))
     with col2:
-        if colegios_buffer:
-            densidad = len(colegios_buffer) / (3.14159 * (st.session_state.buffer_size/1000)**2)
-            st.metric("Densidad (colegios/km²)", f"{densidad:.2f}")
-    
-    # ========================================
-    # IMAGEN 4: Mapa buffer con manzanas por estrato
-    # ========================================
-    st.markdown("### 🏘️ Imagen 4: Buffer con Manzanas por Estrato")
+        if colegios_area:
+            densidad = len(colegios_area) / (3.14159 * (st.session_state.radio_analisis / 1000) ** 2)
+            st.metric("Densidad educativa\n (por km²)", f"{densidad:.2f}")
 
-    # Preparar colores por estrato
-    estratos_unicos = sorted(manzanas_buffer["estrato"].unique())
+        # ========================================
+    # VISUALIZACIÓN: COMPOSICIÓN SOCIOECONÓMICA (ESTRATO)
+    # ========================================
+    st.markdown("""
+    ### 🏘️ Composición Socioeconómica en el Entorno
+
+    En este mapa exploramos cómo se distribuyen los diferentes estratos socioeconómicos dentro del área de análisis seleccionada.
+    Cada polígono corresponde a una manzana urbana y el color representa el estrato predominante en cada una, ayudando a visualizar la diversidad y estructura social del sector.
+
+    La leyenda te ayudará a identificar rápidamente cómo se organiza el tejido urbano alrededor de tu punto de interés.
+    """)
+
+    # Colores consistentes para cada estrato
+    estratos_unicos = sorted(manzanas_zona["estrato"].unique())
     color_estrato = {
         1: '#8B0000',  # Rojo oscuro
         2: '#FF4500',  # Rojo naranja
@@ -624,35 +635,29 @@ elif st.session_state.step == 5:
         6: '#9370DB'   # Púrpura medio
     }
 
-    fig4 = go.Figure()
+    fig_estrato = go.Figure()
 
-    # Buffer
-    fig4.add_trace(go.Scattermapbox(
-        lat=list(buffer_wgs.exterior.xy[1]),
-        lon=list(buffer_wgs.exterior.xy[0]),
+    # Marco del área de análisis (naranja uniforme con el resto)
+    fig_estrato.add_trace(go.Scattermapbox(
+        lat=list(area_wgs.exterior.xy[1]),
+        lon=list(area_wgs.exterior.xy[0]),
         mode='lines',
-        name=f'Buffer {st.session_state.buffer_size}m',
-        line=dict(color='black', width=2),
+        name=f'Área de análisis ({st.session_state.radio_analisis}m)',
+        line=dict(color='orange', width=2),
         showlegend=False
     ))
 
-    # Agrupar manzanas por estrato para optimizar el renderizado
-    trazas_agregadas = set()  # Para controlar que cada estrato aparezca solo una vez en la leyenda
-
+    # Agrupa y pinta las manzanas por estrato, leyenda compacta
+    trazas_agregadas = set()
     for estrato in estratos_unicos:
-        manzanas_estrato = manzanas_buffer[manzanas_buffer["estrato"] == estrato]
-        
-        # Agregar cada manzana del estrato
+        manzanas_estrato = manzanas_zona[manzanas_zona["estrato"] == estrato]
         for idx, (_, manzana) in enumerate(manzanas_estrato.iterrows()):
             if manzana.geometry.geom_type == 'Polygon':
                 coords = list(manzana.geometry.exterior.coords)
-                
-                # Solo mostrar en leyenda la primera manzana de cada estrato
                 mostrar_leyenda = estrato not in trazas_agregadas
                 if mostrar_leyenda:
                     trazas_agregadas.add(estrato)
-                
-                fig4.add_trace(go.Scattermapbox(
+                fig_estrato.add_trace(go.Scattermapbox(
                     lat=[c[1] for c in coords],
                     lon=[c[0] for c in coords],
                     mode='lines',
@@ -666,39 +671,25 @@ elif st.session_state.step == 5:
                     hoverinfo='text'
                 ))
 
-    # Punto central (CORREGIDO)
-    fig4.add_trace(go.Scattermapbox(
+    # Punto central uniformado
+    fig_estrato.add_trace(go.Scattermapbox(
         lat=[st.session_state.punto_lat],
         lon=[st.session_state.punto_lon],
         mode='markers',
-        name='Punto de Interés',
+        name='Punto de interés',
         marker=dict(
-            size=15,
-            color='white',
-            opacity=1.0
+            size=17,
+            color='#3498DB'
         ),
         showlegend=True
     ))
 
-    # Agregar un segundo marcador para el borde negro del punto
-    fig4.add_trace(go.Scattermapbox(
-        lat=[st.session_state.punto_lat],
-        lon=[st.session_state.punto_lon],
-        mode='markers',
-        marker=dict(
-            size=18,
-            color='black',
-            opacity=1.0
-        ),
-        showlegend=False
-    ))
-
-    fig4.update_layout(
+    fig_estrato.update_layout(
         mapbox_style="carto-positron",
         mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
         mapbox_zoom=14,
         margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        title="Manzanas Clasificadas por Estrato",
+        title="Distribución de estratos socioeconómicos",
         showlegend=True,
         height=600,
         legend=dict(
@@ -710,24 +701,18 @@ elif st.session_state.step == 5:
         )
     )
 
-    st.plotly_chart(fig4, use_container_width=True)
+    st.plotly_chart(fig_estrato, use_container_width=True)
 
-    # Distribución de estratos con gráfico visual
-    st.markdown("**Distribución de Estratos:**")
-
-    dist_estratos = manzanas_buffer["estrato"].value_counts().sort_index()
-
-    # Crear dos columnas: texto y gráfico
+    # Distribución gráfica y numérica (profesional)
+    st.markdown("**Resumen visual de estratos en el entorno:**")
+    dist_estratos = manzanas_zona["estrato"].value_counts().sort_index()
     col1, col2 = st.columns([1, 1])
-
     with col1:
         for estrato, cantidad in dist_estratos.items():
-            porcentaje = cantidad/len(manzanas_buffer)*100
+            porcentaje = cantidad / len(manzanas_zona) * 100
             st.write(f"- Estrato {estrato}: {cantidad} manzanas ({porcentaje:.1f}%)")
-
     with col2:
-        # Gráfico de barras de estratos
-        fig_estratos = go.Figure(data=[
+        fig_estratobarras = go.Figure(data=[
             go.Bar(
                 x=[f"E{e}" for e in dist_estratos.index],
                 y=dist_estratos.values,
@@ -736,68 +721,65 @@ elif st.session_state.step == 5:
                 textposition='auto',
             )
         ])
-        
-        fig_estratos.update_layout(
-            title="Cantidad de Manzanas por Estrato",
+        fig_estratobarras.update_layout(
+            title="Cantidad de manzanas por estrato",
             xaxis_title="Estrato",
             yaxis_title="Cantidad",
             height=300,
             margin=dict(l=20, r=20, t=40, b=20)
         )
-        
-        st.plotly_chart(fig_estratos, use_container_width=True)
-        
-    # ========================================
-    # IMAGEN 5: Mapa buffer con áreas POT
-    # ========================================
-    st.markdown("### 🗺️ Imagen 5: Buffer con Áreas del POT")
+        st.plotly_chart(fig_estratobarras, use_container_width=True)
 
-    # Unir con áreas POT
-    if "id_area" in manzanas_buffer.columns and not areas.empty:
-        manzanas_pot = manzanas_buffer.merge(
+        # ========================================
+    # VISUALIZACIÓN: USO DEL SUELO SEGÚN PLAN DE ORDENAMIENTO TERRITORIAL (POT)
+    # ========================================
+    st.markdown("""
+    ### 🗺️ Distribución de Usos del Suelo (POT)
+
+    Este mapa te permite entender cómo están organizados los usos del suelo dentro del área de análisis, según la planificación oficial de Bogotá (POT).
+    Cada color corresponde a una categoría de uso (residencial, dotacional, comercial, servicios, etc.), facilitando la identificación de zonas homogéneas, mixtas o de oportunidad.
+
+    Observa la composición y diversificación del entorno alrededor de tu punto de interés.
+    """)
+
+    # Unificar con áreas POT de la zona y asignar colores
+    if "id_area" in manzanas_zona.columns and not areas.empty:
+        manzanas_pot = manzanas_zona.merge(
             areas[["id_area", "uso_pot_simplificado"]],
             on="id_area",
             how="left"
         )
         manzanas_pot["uso_pot_simplificado"] = manzanas_pot["uso_pot_simplificado"].fillna("Sin clasificación")
     else:
-        manzanas_pot = manzanas_buffer.copy()
+        manzanas_pot = manzanas_zona.copy()
         manzanas_pot["uso_pot_simplificado"] = "Sin clasificación"
 
-    # Colores para POT
     usos_pot = sorted(manzanas_pot["uso_pot_simplificado"].unique())
     palette_pot = px.colors.qualitative.Plotly
     color_pot_map = {uso: palette_pot[i % len(palette_pot)] for i, uso in enumerate(usos_pot)}
 
-    fig5 = go.Figure()
+    fig_pot = go.Figure()
 
-    # Buffer
-    fig5.add_trace(go.Scattermapbox(
-        lat=list(buffer_wgs.exterior.xy[1]),
-        lon=list(buffer_wgs.exterior.xy[0]),
+    # Marco de área de análisis uniforme
+    fig_pot.add_trace(go.Scattermapbox(
+        lat=list(area_wgs.exterior.xy[1]),
+        lon=list(area_wgs.exterior.xy[0]),
         mode='lines',
-        name=f'Buffer {st.session_state.buffer_size}m',
-        line=dict(color='black', width=2),
+        name='Área de análisis',
+        line=dict(color='orange', width=2),
         showlegend=False
     ))
 
-    # Agrupar manzanas por uso POT para optimizar el renderizado
-    trazas_agregadas_pot = set()  # Para controlar que cada uso aparezca solo una vez en la leyenda
-
+    trazas_agregadas_pot = set()
     for uso in usos_pot:
         manzanas_uso = manzanas_pot[manzanas_pot["uso_pot_simplificado"] == uso]
-        
-        # Agregar cada manzana del uso POT
         for idx, (_, manzana) in enumerate(manzanas_uso.iterrows()):
             if manzana.geometry.geom_type == 'Polygon':
                 coords = list(manzana.geometry.exterior.coords)
-                
-                # Solo mostrar en leyenda la primera manzana de cada uso
                 mostrar_leyenda = uso not in trazas_agregadas_pot
                 if mostrar_leyenda:
                     trazas_agregadas_pot.add(uso)
-                
-                fig5.add_trace(go.Scattermapbox(
+                fig_pot.add_trace(go.Scattermapbox(
                     lat=[c[1] for c in coords],
                     lon=[c[0] for c in coords],
                     mode='lines',
@@ -807,43 +789,29 @@ elif st.session_state.step == 5:
                     name=uso,
                     showlegend=mostrar_leyenda,
                     legendgroup=f'pot_{uso}',
-                    hovertext=f'{uso}',
+                    hovertext=uso,
                     hoverinfo='text'
                 ))
 
-    # Punto central (CORREGIDO - mismo método que en Imagen 4)
-    fig5.add_trace(go.Scattermapbox(
+    # Punto central (azul uniforme)
+    fig_pot.add_trace(go.Scattermapbox(
         lat=[st.session_state.punto_lat],
         lon=[st.session_state.punto_lon],
         mode='markers',
-        name='Punto de Interés',
+        name='Punto de interés',
         marker=dict(
-            size=15,
-            color='white',
-            opacity=1.0
+            size=17,
+            color='#3498DB'
         ),
         showlegend=True
     ))
 
-    # Agregar un segundo marcador para el borde negro del punto
-    fig5.add_trace(go.Scattermapbox(
-        lat=[st.session_state.punto_lat],
-        lon=[st.session_state.punto_lon],
-        mode='markers',
-        marker=dict(
-            size=18,
-            color='black',
-            opacity=1.0
-        ),
-        showlegend=False
-    ))
-
-    fig5.update_layout(
+    fig_pot.update_layout(
         mapbox_style="carto-positron",
         mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
         mapbox_zoom=14,
         margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        title="Manzanas Clasificadas por Uso del Suelo (POT)",
+        title="Distribución de usos del suelo según el POT",
         showlegend=True,
         height=600,
         legend=dict(
@@ -855,51 +823,35 @@ elif st.session_state.step == 5:
         )
     )
 
-    st.plotly_chart(fig5, use_container_width=True)
+    st.plotly_chart(fig_pot, use_container_width=True)
 
-    # Distribución de usos POT con visualización mejorada
-    st.markdown("**Distribución de Usos del Suelo:**")
-
+    # Distribución visual y texto
+    st.markdown("**Resumen de usos del suelo en el área de análisis:**")
     dist_pot = manzanas_pot["uso_pot_simplificado"].value_counts()
-
-    # Crear dos columnas: texto y gráfico
     col1, col2 = st.columns([1, 1])
-
     with col1:
         for uso, cantidad in dist_pot.items():
-            porcentaje = cantidad/len(manzanas_pot)*100
+            porcentaje = cantidad / len(manzanas_pot) * 100
             st.write(f"- {uso}: {cantidad} manzanas ({porcentaje:.1f}%)")
-
     with col2:
-        # Gráfico de barras de usos POT
-        fig_pot = go.Figure(data=[
+        fig_pot_barras = go.Figure(data=[
             go.Bar(
-                x=list(range(len(dist_pot))),
+                x=[uso[:20] + '...' if len(uso) > 20 else uso for uso in dist_pot.index],
                 y=dist_pot.values,
                 marker_color=[color_pot_map.get(uso, '#808080') for uso in dist_pot.index],
                 text=dist_pot.values,
                 textposition='auto',
-                hovertext=dist_pot.index,
-                hoverinfo='text+y'
             )
         ])
-        
-        fig_pot.update_layout(
-            title="Cantidad de Manzanas por Uso POT",
-            xaxis_title="Uso del Suelo",
+        fig_pot_barras.update_layout(
+            title="Cantidad de manzanas por uso POT",
+            xaxis_title="Uso del suelo",
             yaxis_title="Cantidad",
             height=300,
-            margin=dict(l=20, r=20, t=40, b=20),
-            showlegend=False,
-            xaxis=dict(
-                tickmode='array',
-                tickvals=list(range(len(dist_pot))),
-                ticktext=[uso[:20] + '...' if len(uso) > 20 else uso for uso in dist_pot.index],
-                tickangle=-45
-            )
+            margin=dict(l=20, r=20, t=40, b=20)
         )
-        
-        st.plotly_chart(fig_pot, use_container_width=True)
+        st.plotly_chart(fig_pot_barras, use_container_width=True)
+
         
     # ========================================
     # INFORME AUTOMATIZADO
