@@ -231,14 +231,14 @@ elif st.session_state.step == 4:
     folium.GeoJson(
         localidad_geo,
         style_function=lambda feature: {
-            "fillColor": "#F7C28E",  # Naranja claro (que te gustó)
+            "fillColor": "#E4EB83",  # Naranja claro (que te gustó)
             "color": "#FF0000",  # Borde rojo
             "weight": 3,
             "fillOpacity": 0.35,
             "interactive": True
         },
         highlight_function=lambda feature: {
-            "fillColor": "#E4EB83",  # Verde-amarillo al hover (que te gustó)
+            "fillColor": "#F7C28E",  # Verde-amarillo al hover (que te gustó)
             "color": "#FF0000",
             "weight": 4,
             "fillOpacity": 0.45
@@ -489,8 +489,7 @@ elif st.session_state.step == 5:
         name='Punto de Interés',
         marker=dict(
             size=15,
-            color='blue',
-            symbol='star'
+            color='blue'
         )
     ))
 
@@ -584,8 +583,7 @@ elif st.session_state.step == 5:
         name='Punto de Interés',
         marker=dict(
             size=15,
-            color='blue',
-            symbol='star'
+            color='blue'
         )
     ))
 
