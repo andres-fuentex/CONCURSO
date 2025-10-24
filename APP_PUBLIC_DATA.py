@@ -392,23 +392,33 @@ elif st.session_state.step == 5:
     # Detecta las estaciones dentro de la zona circular de análisis
     estaciones_area = []
     estaciones_coords = []
+    nombres_estaciones = []  # Nueva lista para almacenar nombres
 
     for _, row in transporte.iterrows():
         geom = row["geometry"]
+        nombres_row = row.get("nombres", "Estación sin nombre")  # Obtener nombres de la fila
+        
+        # Separar nombres si hay múltiples estaciones (separadas por ";")
+        lista_nombres = [n.strip() for n in str(nombres_row).split(";")]
+        
         # Manejar Multipoint y Point simple
         if hasattr(geom, "geoms"):
-            for pt in geom.geoms:
+            for idx, pt in enumerate(geom.geoms):
                 if area_wgs.contains(pt):
                     coord_tuple = (pt.x, pt.y)
                     if coord_tuple not in estaciones_coords:
                         estaciones_area.append(pt)
                         estaciones_coords.append(coord_tuple)
+                        # Asignar nombre correspondiente o genérico si no hay suficientes
+                        nombre = lista_nombres[idx] if idx < len(lista_nombres) else lista_nombres[0]
+                        nombres_estaciones.append(nombre)
         elif isinstance(geom, Point):
             if area_wgs.contains(geom):
                 coord_tuple = (geom.x, geom.y)
                 if coord_tuple not in estaciones_coords:
                     estaciones_area.append(geom)
                     estaciones_coords.append(coord_tuple)
+                    nombres_estaciones.append(lista_nombres[0] if lista_nombres else "Estación")
 
     fig_transporte = go.Figure()
 
@@ -419,11 +429,11 @@ elif st.session_state.step == 5:
         mode='lines',
         fill='toself',
         name=f'Área de análisis ({st.session_state.radio_analisis}m)',
-        fillcolor='rgba(255, 165, 0, 0.12)',  # Naranja muy tenue
+        fillcolor='rgba(255, 165, 0, 0.12)',
         line=dict(color='orange', width=2)
     ))
 
-    # Los puntos de estaciones con estilo uniforme (circular rojo, fácil de distinguir)
+    # Los puntos de estaciones con nombres reales en el tooltip
     if estaciones_area:
         lats = [pt.y for pt in estaciones_area]
         lons = [pt.x for pt in estaciones_area]
@@ -435,15 +445,15 @@ elif st.session_state.step == 5:
             name='Estaciones de Transporte',
             marker=dict(
                 size=14,
-                color='#E63946',    # Rojo intenso
+                color='#E63946',
                 opacity=0.95,
-                symbol='circle'     # Para distinguir del punto central y otros servicios
+                symbol='circle'
             ),
-            text=[f'Estación {i+1}' for i in range(len(estaciones_area))],
+            text=nombres_estaciones,  # Usar nombres reales
             hoverinfo='text'
         ))
 
-    # Punto central seleccionado por el usuario (azul destacado)
+    # Punto central seleccionado por el usuario
     fig_transporte.add_trace(go.Scattermapbox(
         lat=[st.session_state.punto_lat],
         lon=[st.session_state.punto_lon],
@@ -451,7 +461,7 @@ elif st.session_state.step == 5:
         name='Punto de interés',
         marker=dict(
             size=17,
-            color='#3498DB'  # Azul vibrante uniforme
+            color='#3498DB'
         )
     ))
 
@@ -475,6 +485,7 @@ elif st.session_state.step == 5:
         if estaciones_area:
             densidad = len(estaciones_area) / (3.14159 * (st.session_state.radio_analisis / 1000) ** 2)
             st.metric("Densidad de estaciones\n (por km²)", f"{densidad:.2f}")
+
 
         # ========================================
     # VISUALIZACIÓN: MAPA DE CENTROS EDUCATIVOS
