@@ -366,134 +366,240 @@ elif st.session_state.step == 5:
     # ========================================
     # IMAGEN 2: Mapa buffer con estaciones de transporte
     # ========================================
-    st.markdown("### 🚇 Imagen 2: Buffer con Estaciones de Transporte")
+    # ========================================
+# IMAGEN 2: Mapa buffer con estaciones de transporte
+# ========================================
+st.markdown("### 🚇 Imagen 2: Buffer con Estaciones de Transporte")
+
+# Filtrar estaciones dentro del buffer (CORREGIDO)
+estaciones_buffer = []
+estaciones_coords = []  # Para evitar duplicados
+
+for _, row in transporte.iterrows():
+    geom = row["geometry"]
     
-    fig2 = go.Figure()
+    # Manejar MultiPoint
+    if hasattr(geom, "geoms"):
+        for pt in geom.geoms:
+            if buffer_wgs.contains(pt):
+                coord_tuple = (pt.x, pt.y)
+                if coord_tuple not in estaciones_coords:
+                    estaciones_buffer.append(pt)
+                    estaciones_coords.append(coord_tuple)
+    # Manejar Point simple
+    elif isinstance(geom, Point):
+        if buffer_wgs.contains(geom):
+            coord_tuple = (geom.x, geom.y)
+            if coord_tuple not in estaciones_coords:
+                estaciones_buffer.append(geom)
+                estaciones_coords.append(coord_tuple)
+
+fig2 = go.Figure()
+
+# Agregar buffer
+fig2.add_trace(go.Scattermapbox(
+    lat=list(buffer_wgs.exterior.xy[1]),
+    lon=list(buffer_wgs.exterior.xy[0]),
+    mode='lines',
+    fill='toself',
+    name=f'Buffer {st.session_state.buffer_size}m',
+    fillcolor='rgba(255, 165, 0, 0.1)',
+    line=dict(color='orange', width=2)
+))
+
+# Agregar estaciones (MEJORADO para visualización)
+if estaciones_buffer:
+    lats = [pt.y for pt in estaciones_buffer]
+    lons = [pt.x for pt in estaciones_buffer]
     
-    # Buffer
     fig2.add_trace(go.Scattermapbox(
-        lat=list(buffer_wgs.exterior.xy[1]),
-        lon=list(buffer_wgs.exterior.xy[0]),
-        mode='lines',
-        fill='toself',
-        name=f'Buffer {st.session_state.buffer_size}m',
-        fillcolor='rgba(255, 165, 0, 0.1)',
-        line=dict(color='orange', width=2)
+        lat=lats,
+        lon=lons,
+        mode='markers',
+        name='Estaciones de Transporte',
+        marker=dict(
+            size=12,
+            color='red',
+            opacity=1.0,
+            symbol='circle'  # Cambio de 'rail' a 'circle' para mejor visualización
+        ),
+        text=[f'Estación {i+1}' for i in range(len(estaciones_buffer))],
+        hoverinfo='text'
     ))
-    
-    # Estaciones
+
+# Agregar punto central
+fig2.add_trace(go.Scattermapbox(
+    lat=[st.session_state.punto_lat],
+    lon=[st.session_state.punto_lon],
+    mode='markers',
+    name='Punto de Interés',
+    marker=dict(
+        size=15,
+        color='blue',
+        symbol='star'
+    )
+))
+
+fig2.update_layout(
+    mapbox_style="carto-positron",
+    mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
+    mapbox_zoom=14,
+    margin={"r": 0, "t": 40, "l": 0, "b": 0},
+    title=f"Buffer con {len(estaciones_buffer)} Estaciones de Transporte",
+    showlegend=True,
+    height=600
+)
+
+st.plotly_chart(fig2, use_container_width=True)
+
+# Métricas adicionales
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("Total de Estaciones en Buffer", len(estaciones_buffer))
+with col2:
     if estaciones_buffer:
-        fig2.add_trace(go.Scattermapbox(
-            lat=[pt.y for pt in estaciones_buffer],
-            lon=[pt.x for pt in estaciones_buffer],
-            mode='markers',
-            name='Estaciones',
-            marker=dict(size=10, color='red', symbol='rail')
-        ))
+        densidad = len(estaciones_buffer) / (3.14159 * (st.session_state.buffer_size/1000)**2)
+        st.metric("Densidad (estaciones/km²)", f"{densidad:.2f}")
     
-    # Punto central
-    fig2.add_trace(go.Scattermapbox(
-        lat=[st.session_state.punto_lat],
-        lon=[st.session_state.punto_lon],
-        mode='markers',
-        name='Punto de Interés',
-        marker=dict(size=12, color='blue')
-    ))
+ # ========================================
+# IMAGEN 3: Mapa buffer con colegios
+# ========================================
+st.markdown("### 🏫 Imagen 3: Buffer con Colegios")
+
+# Filtrar colegios dentro del buffer (CORREGIDO)
+colegios_buffer = []
+colegios_coords = []  # Para evitar duplicados
+
+for _, row in colegios.iterrows():
+    geom = row["geometry"]
     
-    fig2.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
-        mapbox_zoom=14,
-        margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        title=f"Buffer con {len(estaciones_buffer)} Estaciones de Transporte",
-        showlegend=True
-    )
+    # Manejar MultiPoint
+    if hasattr(geom, "geoms"):
+        for pt in geom.geoms:
+            if buffer_wgs.contains(pt):
+                coord_tuple = (pt.x, pt.y)
+                if coord_tuple not in colegios_coords:
+                    colegios_buffer.append(pt)
+                    colegios_coords.append(coord_tuple)
+    # Manejar Point simple
+    elif isinstance(geom, Point):
+        if buffer_wgs.contains(geom):
+            coord_tuple = (geom.x, geom.y)
+            if coord_tuple not in colegios_coords:
+                colegios_buffer.append(geom)
+                colegios_coords.append(coord_tuple)
+
+fig3 = go.Figure()
+
+# Agregar buffer
+fig3.add_trace(go.Scattermapbox(
+    lat=list(buffer_wgs.exterior.xy[1]),
+    lon=list(buffer_wgs.exterior.xy[0]),
+    mode='lines',
+    fill='toself',
+    name=f'Buffer {st.session_state.buffer_size}m',
+    fillcolor='rgba(0, 0, 255, 0.1)',
+    line=dict(color='blue', width=2)
+))
+
+# Agregar colegios (MEJORADO para visualización)
+if colegios_buffer:
+    lats = [pt.y for pt in colegios_buffer]
+    lons = [pt.x for pt in colegios_buffer]
     
-    st.plotly_chart(fig2, use_container_width=True)
-    st.metric("Total de Estaciones", len(estaciones_buffer))
-    
-    # ========================================
-    # IMAGEN 3: Mapa buffer con colegios
-    # ========================================
-    st.markdown("### 🏫 Imagen 3: Buffer con Colegios")
-    
-    fig3 = go.Figure()
-    
-    # Buffer
     fig3.add_trace(go.Scattermapbox(
-        lat=list(buffer_wgs.exterior.xy[1]),
-        lon=list(buffer_wgs.exterior.xy[0]),
-        mode='lines',
-        fill='toself',
-        name=f'Buffer {st.session_state.buffer_size}m',
-        fillcolor='rgba(0, 0, 255, 0.1)',
-        line=dict(color='blue', width=2)
+        lat=lats,
+        lon=lons,
+        mode='markers',
+        name='Colegios',
+        marker=dict(
+            size=12,
+            color='purple',
+            opacity=1.0,
+            symbol='circle'  # Cambio de 'school' a 'circle' para mejor visualización
+        ),
+        text=[f'Colegio {i+1}' for i in range(len(colegios_buffer))],
+        hoverinfo='text'
     ))
-    
-    # Colegios
+
+# Agregar punto central
+fig3.add_trace(go.Scattermapbox(
+    lat=[st.session_state.punto_lat],
+    lon=[st.session_state.punto_lon],
+    mode='markers',
+    name='Punto de Interés',
+    marker=dict(
+        size=15,
+        color='blue',
+        symbol='star'
+    )
+))
+
+fig3.update_layout(
+    mapbox_style="carto-positron",
+    mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
+    mapbox_zoom=14,
+    margin={"r": 0, "t": 40, "l": 0, "b": 0},
+    title=f"Buffer con {len(colegios_buffer)} Colegios",
+    showlegend=True,
+    height=600
+)
+
+st.plotly_chart(fig3, use_container_width=True)
+
+# Métricas adicionales
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("Total de Colegios en Buffer", len(colegios_buffer))
+with col2:
     if colegios_buffer:
-        fig3.add_trace(go.Scattermapbox(
-            lat=[pt.y for pt in colegios_buffer],
-            lon=[pt.x for pt in colegios_buffer],
-            mode='markers',
-            name='Colegios',
-            marker=dict(size=10, color='purple', symbol='school')
-        ))
+        densidad = len(colegios_buffer) / (3.14159 * (st.session_state.buffer_size/1000)**2)
+        st.metric("Densidad (colegios/km²)", f"{densidad:.2f}")
     
-    # Punto central
-    fig3.add_trace(go.Scattermapbox(
-        lat=[st.session_state.punto_lat],
-        lon=[st.session_state.punto_lon],
-        mode='markers',
-        name='Punto de Interés',
-        marker=dict(size=12, color='blue')
-    ))
+  # ========================================
+# IMAGEN 4: Mapa buffer con manzanas por estrato
+# ========================================
+st.markdown("### 🏘️ Imagen 4: Buffer con Manzanas por Estrato")
+
+# Preparar colores por estrato
+estratos_unicos = sorted(manzanas_buffer["estrato"].unique())
+color_estrato = {
+    1: '#8B0000',  # Rojo oscuro
+    2: '#FF4500',  # Rojo naranja
+    3: '#FFD700',  # Dorado
+    4: '#90EE90',  # Verde claro
+    5: '#4169E1',  # Azul real
+    6: '#9370DB'   # Púrpura medio
+}
+
+fig4 = go.Figure()
+
+# Buffer
+fig4.add_trace(go.Scattermapbox(
+    lat=list(buffer_wgs.exterior.xy[1]),
+    lon=list(buffer_wgs.exterior.xy[0]),
+    mode='lines',
+    name=f'Buffer {st.session_state.buffer_size}m',
+    line=dict(color='black', width=2),
+    showlegend=False
+))
+
+# Agrupar manzanas por estrato para optimizar el renderizado
+trazas_agregadas = set()  # Para controlar que cada estrato aparezca solo una vez en la leyenda
+
+for estrato in estratos_unicos:
+    manzanas_estrato = manzanas_buffer[manzanas_buffer["estrato"] == estrato]
     
-    fig3.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
-        mapbox_zoom=14,
-        margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        title=f"Buffer con {len(colegios_buffer)} Colegios",
-        showlegend=True
-    )
-    
-    st.plotly_chart(fig3, use_container_width=True)
-    st.metric("Total de Colegios", len(colegios_buffer))
-    
-    # ========================================
-    # IMAGEN 4: Mapa buffer con manzanas por estrato
-    # ========================================
-    st.markdown("### 🏘️ Imagen 4: Buffer con Manzanas por Estrato")
-    
-    # Preparar colores por estrato
-    estratos_unicos = sorted(manzanas_buffer["estrato"].unique())
-    color_estrato = {
-        1: '#8B0000',  # Rojo oscuro
-        2: '#FF4500',  # Rojo naranja
-        3: '#FFD700',  # Dorado
-        4: '#90EE90',  # Verde claro
-        5: '#4169E1',  # Azul real
-        6: '#9370DB'   # Púrpura medio
-    }
-    
-    fig4 = go.Figure()
-    
-    # Buffer
-    fig4.add_trace(go.Scattermapbox(
-        lat=list(buffer_wgs.exterior.xy[1]),
-        lon=list(buffer_wgs.exterior.xy[0]),
-        mode='lines',
-        name=f'Buffer {st.session_state.buffer_size}m',
-        line=dict(color='black', width=2),
-        showlegend=False
-    ))
-    
-    # Manzanas por estrato
-    for estrato in estratos_unicos:
-        manzanas_estrato = manzanas_buffer[manzanas_buffer["estrato"] == estrato]
-        for _, manzana in manzanas_estrato.iterrows():
-            coords = manzana.geometry.exterior.coords
+    # Agregar cada manzana del estrato
+    for idx, (_, manzana) in enumerate(manzanas_estrato.iterrows()):
+        if manzana.geometry.geom_type == 'Polygon':
+            coords = list(manzana.geometry.exterior.coords)
+            
+            # Solo mostrar en leyenda la primera manzana de cada estrato
+            mostrar_leyenda = estrato not in trazas_agregadas
+            if mostrar_leyenda:
+                trazas_agregadas.add(estrato)
+            
             fig4.add_trace(go.Scattermapbox(
                 lat=[c[1] for c in coords],
                 lon=[c[0] for c in coords],
@@ -502,75 +608,143 @@ elif st.session_state.step == 5:
                 fillcolor=color_estrato.get(estrato, '#808080'),
                 line=dict(color='black', width=0.5),
                 name=f'Estrato {estrato}',
-                showlegend=True,
-                legendgroup=f'estrato_{estrato}'
+                showlegend=mostrar_leyenda,
+                legendgroup=f'estrato_{estrato}',
+                hovertext=f'Estrato {estrato}',
+                hoverinfo='text'
             ))
+
+# Punto central (CORREGIDO)
+fig4.add_trace(go.Scattermapbox(
+    lat=[st.session_state.punto_lat],
+    lon=[st.session_state.punto_lon],
+    mode='markers',
+    name='Punto de Interés',
+    marker=dict(
+        size=15,
+        color='white',
+        opacity=1.0
+    ),
+    showlegend=True
+))
+
+# Agregar un segundo marcador para el borde negro del punto
+fig4.add_trace(go.Scattermapbox(
+    lat=[st.session_state.punto_lat],
+    lon=[st.session_state.punto_lon],
+    mode='markers',
+    marker=dict(
+        size=18,
+        color='black',
+        opacity=1.0
+    ),
+    showlegend=False
+))
+
+fig4.update_layout(
+    mapbox_style="carto-positron",
+    mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
+    mapbox_zoom=14,
+    margin={"r": 0, "t": 40, "l": 0, "b": 0},
+    title="Manzanas Clasificadas por Estrato",
+    showlegend=True,
+    height=600,
+    legend=dict(
+        yanchor="top",
+        y=0.99,
+        xanchor="left",
+        x=0.01,
+        bgcolor="rgba(255, 255, 255, 0.8)"
+    )
+)
+
+st.plotly_chart(fig4, use_container_width=True)
+
+# Distribución de estratos con gráfico visual
+st.markdown("**Distribución de Estratos:**")
+
+dist_estratos = manzanas_buffer["estrato"].value_counts().sort_index()
+
+# Crear dos columnas: texto y gráfico
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    for estrato, cantidad in dist_estratos.items():
+        porcentaje = cantidad/len(manzanas_buffer)*100
+        st.write(f"- Estrato {estrato}: {cantidad} manzanas ({porcentaje:.1f}%)")
+
+with col2:
+    # Gráfico de barras de estratos
+    fig_estratos = go.Figure(data=[
+        go.Bar(
+            x=[f"E{e}" for e in dist_estratos.index],
+            y=dist_estratos.values,
+            marker_color=[color_estrato.get(e, '#808080') for e in dist_estratos.index],
+            text=dist_estratos.values,
+            textposition='auto',
+        )
+    ])
     
-    # Punto central
-    fig4.add_trace(go.Scattermapbox(
-        lat=[st.session_state.punto_lat],
-        lon=[st.session_state.punto_lon],
-        mode='markers',
-        name='Punto de Interés',
-        marker=dict(size=12, color='white', line=dict(color='black', width=2))
-    ))
-    
-    fig4.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
-        mapbox_zoom=14,
-        margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        title="Manzanas Clasificadas por Estrato",
-        showlegend=True
+    fig_estratos.update_layout(
+        title="Cantidad de Manzanas por Estrato",
+        xaxis_title="Estrato",
+        yaxis_title="Cantidad",
+        height=300,
+        margin=dict(l=20, r=20, t=40, b=20)
     )
     
-    st.plotly_chart(fig4, use_container_width=True)
+    st.plotly_chart(fig_estratos, use_container_width=True)
     
-    # Distribución de estratos
-    dist_estratos = manzanas_buffer["estrato"].value_counts().sort_index()
-    st.markdown("**Distribución de Estratos:**")
-    for estrato, cantidad in dist_estratos.items():
-        st.write(f"- Estrato {estrato}: {cantidad} manzanas ({cantidad/len(manzanas_buffer)*100:.1f}%)")
+   # ========================================
+# IMAGEN 5: Mapa buffer con áreas POT
+# ========================================
+st.markdown("### 🗺️ Imagen 5: Buffer con Áreas del POT")
+
+# Unir con áreas POT
+if "id_area" in manzanas_buffer.columns and not areas.empty:
+    manzanas_pot = manzanas_buffer.merge(
+        areas[["id_area", "uso_pot_simplificado"]],
+        on="id_area",
+        how="left"
+    )
+    manzanas_pot["uso_pot_simplificado"] = manzanas_pot["uso_pot_simplificado"].fillna("Sin clasificación")
+else:
+    manzanas_pot = manzanas_buffer.copy()
+    manzanas_pot["uso_pot_simplificado"] = "Sin clasificación"
+
+# Colores para POT
+usos_pot = sorted(manzanas_pot["uso_pot_simplificado"].unique())
+palette_pot = px.colors.qualitative.Plotly
+color_pot_map = {uso: palette_pot[i % len(palette_pot)] for i, uso in enumerate(usos_pot)}
+
+fig5 = go.Figure()
+
+# Buffer
+fig5.add_trace(go.Scattermapbox(
+    lat=list(buffer_wgs.exterior.xy[1]),
+    lon=list(buffer_wgs.exterior.xy[0]),
+    mode='lines',
+    name=f'Buffer {st.session_state.buffer_size}m',
+    line=dict(color='black', width=2),
+    showlegend=False
+))
+
+# Agrupar manzanas por uso POT para optimizar el renderizado
+trazas_agregadas_pot = set()  # Para controlar que cada uso aparezca solo una vez en la leyenda
+
+for uso in usos_pot:
+    manzanas_uso = manzanas_pot[manzanas_pot["uso_pot_simplificado"] == uso]
     
-    # ========================================
-    # IMAGEN 5: Mapa buffer con áreas POT
-    # ========================================
-    st.markdown("### 🗺️ Imagen 5: Buffer con Áreas del POT")
-    
-    # Unir con áreas POT
-    if "id_area" in manzanas_buffer.columns and not areas.empty:
-        manzanas_pot = manzanas_buffer.merge(
-            areas[["id_area", "uso_pot_simplificado"]],
-            on="id_area",
-            how="left"
-        )
-        manzanas_pot["uso_pot_simplificado"] = manzanas_pot["uso_pot_simplificado"].fillna("Sin clasificación")
-    else:
-        manzanas_pot = manzanas_buffer.copy()
-        manzanas_pot["uso_pot_simplificado"] = "Sin clasificación"
-    
-    # Colores para POT
-    usos_pot = manzanas_pot["uso_pot_simplificado"].unique()
-    palette_pot = px.colors.qualitative.Plotly
-    color_pot_map = {uso: palette_pot[i % len(palette_pot)] for i, uso in enumerate(usos_pot)}
-    
-    fig5 = go.Figure()
-    
-    # Buffer
-    fig5.add_trace(go.Scattermapbox(
-        lat=list(buffer_wgs.exterior.xy[1]),
-        lon=list(buffer_wgs.exterior.xy[0]),
-        mode='lines',
-        name=f'Buffer {st.session_state.buffer_size}m',
-        line=dict(color='black', width=2),
-        showlegend=False
-    ))
-    
-    # Manzanas por uso POT
-    for uso in usos_pot:
-        manzanas_uso = manzanas_pot[manzanas_pot["uso_pot_simplificado"] == uso]
-        for _, manzana in manzanas_uso.iterrows():
-            coords = manzana.geometry.exterior.coords
+    # Agregar cada manzana del uso POT
+    for idx, (_, manzana) in enumerate(manzanas_uso.iterrows()):
+        if manzana.geometry.geom_type == 'Polygon':
+            coords = list(manzana.geometry.exterior.coords)
+            
+            # Solo mostrar en leyenda la primera manzana de cada uso
+            mostrar_leyenda = uso not in trazas_agregadas_pot
+            if mostrar_leyenda:
+                trazas_agregadas_pot.add(uso)
+            
             fig5.add_trace(go.Scattermapbox(
                 lat=[c[1] for c in coords],
                 lon=[c[0] for c in coords],
@@ -579,35 +753,101 @@ elif st.session_state.step == 5:
                 fillcolor=color_pot_map.get(uso, '#808080'),
                 line=dict(color='black', width=0.5),
                 name=uso,
-                showlegend=True,
-                legendgroup=f'pot_{uso}'
+                showlegend=mostrar_leyenda,
+                legendgroup=f'pot_{uso}',
+                hovertext=f'{uso}',
+                hoverinfo='text'
             ))
+
+# Punto central (CORREGIDO - mismo método que en Imagen 4)
+fig5.add_trace(go.Scattermapbox(
+    lat=[st.session_state.punto_lat],
+    lon=[st.session_state.punto_lon],
+    mode='markers',
+    name='Punto de Interés',
+    marker=dict(
+        size=15,
+        color='white',
+        opacity=1.0
+    ),
+    showlegend=True
+))
+
+# Agregar un segundo marcador para el borde negro del punto
+fig5.add_trace(go.Scattermapbox(
+    lat=[st.session_state.punto_lat],
+    lon=[st.session_state.punto_lon],
+    mode='markers',
+    marker=dict(
+        size=18,
+        color='black',
+        opacity=1.0
+    ),
+    showlegend=False
+))
+
+fig5.update_layout(
+    mapbox_style="carto-positron",
+    mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
+    mapbox_zoom=14,
+    margin={"r": 0, "t": 40, "l": 0, "b": 0},
+    title="Manzanas Clasificadas por Uso del Suelo (POT)",
+    showlegend=True,
+    height=600,
+    legend=dict(
+        yanchor="top",
+        y=0.99,
+        xanchor="left",
+        x=0.01,
+        bgcolor="rgba(255, 255, 255, 0.8)"
+    )
+)
+
+st.plotly_chart(fig5, use_container_width=True)
+
+# Distribución de usos POT con visualización mejorada
+st.markdown("**Distribución de Usos del Suelo:**")
+
+dist_pot = manzanas_pot["uso_pot_simplificado"].value_counts()
+
+# Crear dos columnas: texto y gráfico
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    for uso, cantidad in dist_pot.items():
+        porcentaje = cantidad/len(manzanas_pot)*100
+        st.write(f"- {uso}: {cantidad} manzanas ({porcentaje:.1f}%)")
+
+with col2:
+    # Gráfico de barras de usos POT
+    fig_pot = go.Figure(data=[
+        go.Bar(
+            x=list(range(len(dist_pot))),
+            y=dist_pot.values,
+            marker_color=[color_pot_map.get(uso, '#808080') for uso in dist_pot.index],
+            text=dist_pot.values,
+            textposition='auto',
+            hovertext=dist_pot.index,
+            hoverinfo='text+y'
+        )
+    ])
     
-    # Punto central
-    fig5.add_trace(go.Scattermapbox(
-        lat=[st.session_state.punto_lat],
-        lon=[st.session_state.punto_lon],
-        mode='markers',
-        name='Punto de Interés',
-        marker=dict(size=12, color='white', line=dict(color='black', width=2))
-    ))
-    
-    fig5.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
-        mapbox_zoom=14,
-        margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        title="Manzanas Clasificadas por Uso del Suelo (POT)",
-        showlegend=True
+    fig_pot.update_layout(
+        title="Cantidad de Manzanas por Uso POT",
+        xaxis_title="Uso del Suelo",
+        yaxis_title="Cantidad",
+        height=300,
+        margin=dict(l=20, r=20, t=40, b=20),
+        showlegend=False,
+        xaxis=dict(
+            tickmode='array',
+            tickvals=list(range(len(dist_pot))),
+            ticktext=[uso[:20] + '...' if len(uso) > 20 else uso for uso in dist_pot.index],
+            tickangle=-45
+        )
     )
     
-    st.plotly_chart(fig5, use_container_width=True)
-    
-    # Distribución de usos POT
-    dist_pot = manzanas_pot["uso_pot_simplificado"].value_counts()
-    st.markdown("**Distribución de Usos del Suelo:**")
-    for uso, cantidad in dist_pot.items():
-        st.write(f"- {uso}: {cantidad} manzanas ({cantidad/len(manzanas_pot)*100:.1f}%)")
+    st.plotly_chart(fig_pot, use_container_width=True)
     
     # ========================================
     # INFORME AUTOMATIZADO
