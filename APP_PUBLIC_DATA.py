@@ -190,9 +190,7 @@ elif st.session_state.step == 3:
             st.session_state.step = 4
             st.rerun()
 
-# ========================================
-# PASO 4: CLIC SOBRE PUNTO DE INTERÉS
-# ========================================
+
 # ========================================
 # PASO 4: CLIC SOBRE PUNTO DE INTERÉS
 # ========================================
@@ -203,8 +201,7 @@ elif st.session_state.step == 4:
     **Localidad:** {st.session_state.localidad_sel}  
     **Buffer:** {st.session_state.buffer_size} metros
     
-    Haz clic sobre el mapa para seleccionar el punto de interés a analizar.
-    El círculo naranja muestra el área de análisis que se generará:
+    Haz clic sobre el mapa para seleccionar el punto de interés a analizar:
     """)
     
     localidades = st.session_state.localidades
@@ -222,7 +219,7 @@ elif st.session_state.step == 4:
     bounds = localidad_geo.total_bounds
     center = [(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2]
     
-    # Crear mapa con cursor personalizado
+    # Crear mapa
     mapa = folium.Map(
         location=center, 
         zoom_start=12, 
@@ -230,51 +227,50 @@ elif st.session_state.step == 4:
         prefer_canvas=True
     )
     
-    # Agregar polígono de la localidad con estilo mejorado (SIN TOOLTIP)
+    # Agregar polígono de la localidad con los colores que te gustaron
     folium.GeoJson(
         localidad_geo,
         style_function=lambda feature: {
-            "fillColor": "#F7C28E",  # Naranja claro
+            "fillColor": "#F7C28E",  # Naranja claro (que te gustó)
             "color": "#FF0000",  # Borde rojo
             "weight": 3,
-            "fillOpacity": 0.35,  # Más visible
-            "interactive": True  # Importante para eventos
+            "fillOpacity": 0.35,
+            "interactive": True
         },
         highlight_function=lambda feature: {
-            "fillColor": "#E4EB83",  # Naranja más intenso al hover
+            "fillColor": "#E4EB83",  # Verde-amarillo al hover (que te gustó)
             "color": "#FF0000",
             "weight": 4,
             "fillOpacity": 0.45
         }
     ).add_to(mapa)
     
-    # Agregar CSS mejorado para el cursor en TODO el mapa
-    cursor_css = f"""
+    # Agregar CSS para cursor de cruz
+    cursor_css = """
     <style>
-        /* Cursor de cruz en todo el contenedor del mapa */
-        .folium-map {{
+        .folium-map {
             cursor: crosshair !important;
-        }}
-        .leaflet-container {{
+        }
+        .leaflet-container {
             cursor: crosshair !important;
-        }}
-        .leaflet-interactive {{
+        }
+        .leaflet-interactive {
             cursor: crosshair !important;
-        }}
-        .leaflet-grab {{
+        }
+        .leaflet-grab {
             cursor: crosshair !important;
-        }}
-        .leaflet-dragging .leaflet-grab {{
+        }
+        .leaflet-dragging .leaflet-grab {
             cursor: move !important;
-        }}
-        /* Asegurar que el tooltip no cambie el cursor */
-        .leaflet-tooltip {{
-            pointer-events: none !important;
-        }}
+        }
     </style>
     """
     
+    # Agregar CSS al mapa
+    mapa.get_root().html.add_child(folium.Element(cursor_css))
     
+    # Renderizar mapa (ESTO FALTABA)
+    result = st_folium(mapa, width=900, height=600, returned_objects=["last_clicked"], key="mapa_punto_interes")
     
     # Detectar clic
     clicked = result.get("last_clicked")
@@ -310,6 +306,7 @@ elif st.session_state.step == 4:
         if st.button("🔄 Reiniciar", use_container_width=True):
             st.session_state.step = 1
             st.rerun()
+
 
 # ========================================
 # PASO 5: GENERACIÓN DE MAPAS Y ANÁLISIS
