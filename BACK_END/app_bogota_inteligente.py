@@ -593,28 +593,28 @@ elif st.session_state.step == 5:
     with col_mapa_mov:
         fig_t = go.Figure()
         # Zona
-        fig_t.add_trace(go.Scattermapbox(
+        fig_t.add_trace(go.Scattermap(
             lat=list(area_interes.exterior.xy[1]), lon=list(area_interes.exterior.xy[0]),
             mode='lines', fill='toself', name='Zona analizada',
             fillcolor='rgba(255, 165, 0, 0.1)', line=dict(color='orange', width=2)
         ))
         # Estaciones
         if not transporte_zona.empty:
-            fig_t.add_trace(go.Scattermapbox(
+            fig_t.add_trace(go.Scattermap(
                 lat=transporte_zona.geometry.y, lon=transporte_zona.geometry.x,
                 mode='markers', name='Paraderos',
                 marker=dict(size=10, color='#E74C3C', symbol='circle'),
                 text=transporte_zona['nombre_estacion'], hoverinfo='text'
             ))
         # Tú
-        fig_t.add_trace(go.Scattermapbox(
+        fig_t.add_trace(go.Scattermap(
             lat=[st.session_state.punto_lat], lon=[st.session_state.punto_lon],
             mode='markers', name='Tú', marker=dict(size=12, color='#3498DB')
         ))
         fig_t.update_layout(
-            mapbox_style="carto-positron", 
-            mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
-            mapbox_zoom=14, margin={"r":0,"t":0,"l":0,"b":0}, height=350, showlegend=True,
+            map_style="carto-positron", 
+            map_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
+            map_zoom=14, margin={"r":0,"t":0,"l":0,"b":0}, height=350, showlegend=True,
             legend=dict(orientation="h", y=1.1)
         )
         st.plotly_chart(fig_t, use_container_width=True)
@@ -643,26 +643,26 @@ elif st.session_state.step == 5:
 
     with col_mapa_edu:
         fig_e = go.Figure()
-        fig_e.add_trace(go.Scattermapbox(
+        fig_e.add_trace(go.Scattermap(
             lat=list(area_interes.exterior.xy[1]), lon=list(area_interes.exterior.xy[0]),
             mode='lines', fill='toself', name='Zona analizada',
             fillcolor='rgba(155, 89, 182, 0.1)', line=dict(color='#8E44AD', width=2)
         ))
         if not colegios_zona.empty:
-            fig_e.add_trace(go.Scattermapbox(
+            fig_e.add_trace(go.Scattermap(
                 lat=colegios_zona.geometry.y, lon=colegios_zona.geometry.x,
                 mode='markers', name='Colegios',
                 marker=dict(size=9, color='#8E44AD', symbol='circle'),
                 text=colegios_zona['nombre'], hoverinfo='text'
             ))
-        fig_e.add_trace(go.Scattermapbox(
+        fig_e.add_trace(go.Scattermap(
             lat=[st.session_state.punto_lat], lon=[st.session_state.punto_lon],
             mode='markers', name='Tú', marker=dict(size=12, color='#3498DB')
         ))
         fig_e.update_layout(
-            mapbox_style="carto-positron", 
-            mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
-            mapbox_zoom=14, margin={"r":0,"t":0,"l":0,"b":0}, height=350, showlegend=False
+            map_style="carto-positron", 
+            map_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
+            map_zoom=14, margin={"r":0,"t":0,"l":0,"b":0}, height=350, showlegend=False
         )
         st.plotly_chart(fig_e, use_container_width=True)
 
@@ -692,7 +692,7 @@ elif st.session_state.step == 5:
         fig_s = go.Figure()
         
         # 1. Zona (Círculo Naranja)
-        fig_s.add_trace(go.Scattermapbox(
+        fig_s.add_trace(go.Scattermap(
             lat=list(area_interes.exterior.xy[1]), lon=list(area_interes.exterior.xy[0]),
             mode='lines', fill='toself', name='Zona analizada',
             fillcolor='rgba(255, 165, 0, 0.1)', line=dict(color='orange', width=2)
@@ -700,7 +700,7 @@ elif st.session_state.step == 5:
         
         # 2. Hospitales (Puntos)
         if not salud_zona.empty:
-            fig_s.add_trace(go.Scattermapbox(
+            fig_s.add_trace(go.Scattermap(
                 lat=salud_zona.geometry.y, lon=salud_zona.geometry.x,
                 mode='markers', name='Salud',
                 # Usamos símbolo de cruz y color Rojo
@@ -711,16 +711,16 @@ elif st.session_state.step == 5:
             ))
             
         # 3. Tú (Punto Azul)
-        fig_s.add_trace(go.Scattermapbox(
+        fig_s.add_trace(go.Scattermap(
             lat=[st.session_state.punto_lat], lon=[st.session_state.punto_lon],
             mode='markers', name='Tú', marker=dict(size=12, color='#3498DB')
         ))
         
         # Configuración igual a Movilidad
         fig_s.update_layout(
-            mapbox_style="carto-positron", 
-            mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
-            mapbox_zoom=14, margin={"r":0,"t":0,"l":0,"b":0}, height=350, showlegend=True,
+            map_style="carto-positron", 
+            map_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
+            map_zoom=14, margin={"r":0,"t":0,"l":0,"b":0}, height=350, showlegend=True,
             legend=dict(orientation="h", y=1.1)
         )
         st.plotly_chart(fig_s, use_container_width=True, key="mapa_salud_unico")
@@ -747,7 +747,7 @@ elif st.session_state.step == 5:
         fig_v = go.Figure()
         
         # 1. Zona de Análisis (Círculo Naranja)
-        fig_v.add_trace(go.Scattermapbox(
+        fig_v.add_trace(go.Scattermap(
             lat=list(area_interes.exterior.xy[1]), lon=list(area_interes.exterior.xy[0]),
             mode='lines', fill='toself', name='Zona analizada',
             fillcolor='rgba(255, 165, 0, 0.05)', # Muy transparente
@@ -761,8 +761,8 @@ elif st.session_state.step == 5:
             # Convertimos las geometrías a GeoJSON para pintarlas
             geojson_parques = json.loads(parques_zona.to_json())
             
-            # Usamos Choroplethmapbox para pintar el relleno verde
-            fig_v.add_trace(go.Choroplethmapbox(
+            # Usamos Choroplethmap para pintar el relleno verde
+            fig_v.add_trace(go.Choroplethmap(
                 geojson=geojson_parques,
                 locations=parques_zona.index, # ID de enlace
                 z=[1] * len(parques_zona),    # Valor dummy para color uniforme
@@ -778,15 +778,15 @@ elif st.session_state.step == 5:
             ))
             
         # 3. Tú 
-        fig_v.add_trace(go.Scattermapbox(
+        fig_v.add_trace(go.Scattermap(
             lat=[st.session_state.punto_lat], lon=[st.session_state.punto_lon],
             mode='markers', name='Tú', marker=dict(size=14, color='#2980B9', symbol='circle')
         ))
         
         fig_v.update_layout(
-            mapbox_style="carto-positron", 
-            mapbox_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
-            mapbox_zoom=14.5, margin={"r":0,"t":0,"l":0,"b":0}, height=350, showlegend=True,
+            map_style="carto-positron", 
+            map_center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
+            map_zoom=14.5, margin={"r":0,"t":0,"l":0,"b":0}, height=350, showlegend=True,
             legend=dict(orientation="h", y=1.1)
         )
         st.plotly_chart(fig_v, use_container_width=True, key="mapa_parques_poligonos")
@@ -815,15 +815,15 @@ elif st.session_state.step == 5:
         col_mapa_soc, col_data_soc = st.columns([2, 1])
         with col_mapa_soc:
             manzanas_zona['estrato'] = manzanas_zona['estrato'].astype(int)
-            fig_s = px.choropleth_mapbox(
+            fig_s = px.choropleth_map(
                 manzanas_zona, geojson=manzanas_zona.geometry, locations=manzanas_zona.index,
-                color="estrato", mapbox_style="carto-positron", zoom=14.5,
+                color="estrato", map_style="carto-positron", zoom=14.5,
                 center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
                 opacity=0.6,
                 color_discrete_map={1:'#C0392B', 2:'#E67E22', 3:'#F1C40F', 4:'#2ECC71', 5:'#3498DB', 6:'#8E44AD'}
             )
             fig_s.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=350, showlegend=False)
-            fig_s.add_trace(go.Scattermapbox(lat=list(area_interes.exterior.xy[1]), lon=list(area_interes.exterior.xy[0]), mode='lines', line=dict(color='black', width=2), name='Límite'))
+            fig_s.add_trace(go.Scattermap(lat=list(area_interes.exterior.xy[1]), lon=list(area_interes.exterior.xy[0]), mode='lines', line=dict(color='black', width=2), name='Límite'))
             st.plotly_chart(fig_s, use_container_width=True)
         with col_data_soc:
             st.info(f"Moda: **Estrato {manzanas_zona['estrato'].mode()[0]}**")
@@ -912,13 +912,13 @@ elif st.session_state.step == 5:
             else:
                 color_map[cat] = palette[i % len(palette)]
         
-        fig_p = px.choropleth_mapbox(
+        fig_p = px.choropleth_map(
             manzanas_final, 
             geojson=manzanas_final.geometry, 
             locations=manzanas_final.index,
             color="uso_pot_simplificado", 
             color_discrete_map=color_map,
-            mapbox_style="carto-positron", 
+            map_style="carto-positron", 
             zoom=14.5,
             center={"lat": st.session_state.punto_lat, "lon": st.session_state.punto_lon},
             opacity=0.6,
@@ -928,7 +928,7 @@ elif st.session_state.step == 5:
         
         # Línea de límite
         if 'area_interes' in locals():
-             fig_p.add_trace(go.Scattermapbox(
+             fig_p.add_trace(go.Scattermap(
                 lat=list(area_interes.exterior.xy[1]), 
                 lon=list(area_interes.exterior.xy[0]), 
                 mode='lines', 
@@ -1105,15 +1105,15 @@ if st.session_state.step == 5:
             if 'area_interes' in locals():
                 lats_poly = list(area_interes.exterior.xy[1])
                 lons_poly = list(area_interes.exterior.xy[0])
-                fig_mapa.add_trace(go.Scattermapbox(lat=lats_poly, lon=lons_poly, mode='lines', fill='toself', fillcolor='rgba(52, 152, 219, 0.1)', line=dict(color='#3498DB', width=2)))
+                fig_mapa.add_trace(go.Scattermap(lat=lats_poly, lon=lons_poly, mode='lines', fill='toself', fillcolor='rgba(52, 152, 219, 0.1)', line=dict(color='#3498DB', width=2)))
             # Puntos
-            if not transporte_zona.empty: fig_mapa.add_trace(go.Scattermapbox(lat=transporte_zona.geometry.y, lon=transporte_zona.geometry.x, mode='markers', marker=dict(size=6, color='#E74C3C')))
-            if not colegios_zona.empty: fig_mapa.add_trace(go.Scattermapbox(lat=colegios_zona.geometry.y, lon=colegios_zona.geometry.x, mode='markers', marker=dict(size=6, color="#9625C7")))
-            if not salud_zona.empty: fig_mapa.add_trace(go.Scattermapbox(lat=salud_zona.geometry.y, lon=salud_zona.geometry.x, mode='markers', marker=dict(size=6, color="#3A07F3")))
+            if not transporte_zona.empty: fig_mapa.add_trace(go.Scattermap(lat=transporte_zona.geometry.y, lon=transporte_zona.geometry.x, mode='markers', marker=dict(size=6, color='#E74C3C')))
+            if not colegios_zona.empty: fig_mapa.add_trace(go.Scattermap(lat=colegios_zona.geometry.y, lon=colegios_zona.geometry.x, mode='markers', marker=dict(size=6, color="#9625C7")))
+            if not salud_zona.empty: fig_mapa.add_trace(go.Scattermap(lat=salud_zona.geometry.y, lon=salud_zona.geometry.x, mode='markers', marker=dict(size=6, color="#3A07F3")))
             # Usuario
-            fig_mapa.add_trace(go.Scattermapbox(lat=[lat], lon=[lon], mode='markers', marker=dict(size=12, color='black')))
+            fig_mapa.add_trace(go.Scattermap(lat=[lat], lon=[lon], mode='markers', marker=dict(size=12, color='black')))
             
-            fig_mapa.update_layout(mapbox_style="carto-positron", mapbox_zoom=14.5, mapbox_center={"lat": lat, "lon": lon}, margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False)
+            fig_mapa.update_layout(map_style="carto-positron", map_zoom=14.5, map_center={"lat": lat, "lon": lon}, margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False)
             
             img_bytes = fig_mapa.to_image(format="png", width=600, height=350, scale=2)
             b64_mapa = base64.b64encode(img_bytes).decode('utf-8')
@@ -1248,3 +1248,4 @@ if st.session_state.step == 5:
     with col3:
         # AQUI REUTILIZAMOS LA URL QUE CALCULAMOS ARRIBA
         st.link_button(label="🚀 VER GEMELO DIGITAL", url=url_final, use_container_width=True)
+
